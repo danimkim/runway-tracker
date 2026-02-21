@@ -19,16 +19,16 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
--- open banking tokens
-create table public.open_banking_tokens (
-  id              uuid primary key default gen_random_uuid(),
-  user_id         uuid references public.profiles(id) on delete cascade not null,
-  access_token    text not null,
-  refresh_token   text not null,
-  expires_at      timestamptz,
-  bank_account_no text,
-  created_at      timestamptz default now(),
-  updated_at      timestamptz default now()
+-- Monzo OAuth tokens
+create table public.monzo_tokens (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid references public.profiles(id) on delete cascade not null,
+  access_token  text not null,
+  refresh_token text not null,
+  expires_at    timestamptz,
+  account_id    text,
+  created_at    timestamptz default now(),
+  updated_at    timestamptz default now()
 );
 
 -- transactions
@@ -52,7 +52,7 @@ create index on public.transactions(user_id, transacted_at desc);
 
 -- enable Row Level Security
 alter table public.profiles enable row level security;
-alter table public.open_banking_tokens enable row level security;
+alter table public.monzo_tokens enable row level security;
 alter table public.transactions enable row level security;
 
 -- RLS policies: users can only access their own data
@@ -61,7 +61,7 @@ create policy "Users can view own profile"
   using (auth.uid() = id);
 
 create policy "Users can view own tokens"
-  on public.open_banking_tokens for all
+  on public.monzo_tokens for all
   using (auth.uid() = user_id);
 
 create policy "Users can view own transactions"

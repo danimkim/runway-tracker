@@ -10,7 +10,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       profiles: {
@@ -29,15 +29,16 @@ export interface Database {
           email?: string | null
           created_at?: string
         }
+        Relationships: []
       }
-      open_banking_tokens: {
+      monzo_tokens: {
         Row: {
           id: string
           user_id: string
           access_token: string
           refresh_token: string
           expires_at: string | null
-          bank_account_no: string | null
+          account_id: string | null
           created_at: string
           updated_at: string
         }
@@ -47,7 +48,7 @@ export interface Database {
           access_token: string
           refresh_token: string
           expires_at?: string | null
-          bank_account_no?: string | null
+          account_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -57,10 +58,19 @@ export interface Database {
           access_token?: string
           refresh_token?: string
           expires_at?: string | null
-          bank_account_no?: string | null
+          account_id?: string | null
           created_at?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "monzo_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       transactions: {
         Row: {
@@ -108,10 +118,20 @@ export interface Database {
           transacted_at?: string
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
     Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
   }
 }

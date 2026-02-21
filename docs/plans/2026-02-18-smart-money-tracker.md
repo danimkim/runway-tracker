@@ -2,27 +2,28 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** 토스뱅크 체크카드 결제 내역을 오픈뱅킹 API로 자동 수집하고, 일별/주별/월별 지출을 시각화하는 대시보드 앱을 구축한다.
+**Goal:** Automatically collect Monzo card transactions via the Monzo API and build a dashboard that visualises daily/weekly/monthly spending.
 
-**Architecture:** Next.js App Router를 프론트엔드 및 API Routes로 사용하고, Supabase가 PostgreSQL DB + Auth + Storage + Edge Function + pg_cron을 담당한다. pg_cron이 5분마다 Supabase Edge Function을 호출하여 금융결제원 오픈뱅킹 API에서 거래내역을 가져와 저장한다.
+**Architecture:** Next.js App Router for frontend and API Routes, Supabase for PostgreSQL DB + Auth + Storage + Edge Functions + pg_cron. pg_cron calls a Supabase Edge Function every 5 minutes to fetch and store transactions from the Monzo API.
 
 **Tech Stack:** Next.js 14 (App Router) + TypeScript, Tailwind CSS, shadcn/ui, Recharts, Supabase (PostgreSQL/Auth/Storage/Edge Functions/pg_cron), Frankfurter API, Vitest, Playwright, Vercel
 
 ---
 
-## 사전 준비 (코드 작성 전)
+## Prerequisites (before writing code)
 
-아래 두 가지를 미리 준비해야 한다:
+Two things to prepare in advance:
 
-1. **Supabase 프로젝트 생성**
-   - https://supabase.com → New Project 생성
-   - Project URL, anon key, service_role key를 메모
+1. **Create a Supabase project**
+   - https://supabase.com → New Project
+   - Note down Project URL, anon key, service_role key
 
-2. **금융결제원 오픈뱅킹 테스트 계정 신청**
-   - https://developers.openbanking.or.kr → 테스트 앱 생성
-   - client_id, client_secret 발급
-   - Redirect URI 등록: `http://localhost:3000/auth/callback`
-   - 테스트 환경 Base URL: `https://testapi.openbanking.or.kr`
+2. **Create a Monzo developer client**
+   - https://developers.monzo.com → New OAuth client
+   - Set Redirect URL to: `http://localhost:3000/auth/callback`
+   - Note down `client_id` and `client_secret`
+   - Auth URL: `https://auth.monzo.com`
+   - API Base URL: `https://api.monzo.com`
 
 ---
 
@@ -50,7 +51,7 @@ smart-money-tracker/
 │   │   ├── client.ts              ← 브라우저용
 │   │   ├── server.ts              ← 서버 컴포넌트용
 │   │   └── middleware.ts          ← 미들웨어용
-│   ├── open-banking/
+│   ├── monzo/
 │   │   ├── client.ts
 │   │   └── types.ts
 │   └── utils/
@@ -124,9 +125,8 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-OPEN_BANKING_CLIENT_ID=your-client-id
-OPEN_BANKING_CLIENT_SECRET=your-client-secret
-OPEN_BANKING_BASE_URL=https://testapi.openbanking.or.kr
+MONZO_CLIENT_ID=your-client-id
+MONZO_CLIENT_SECRET=your-client-secret
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
@@ -978,140 +978,148 @@ git commit -m "feat: add spending aggregation utilities with tests"
 
 ---
 
-## Task 8: 오픈뱅킹 OAuth 연동
+## Task 8: Monzo OAuth Integration
 
 **Files:**
-- Create: `lib/open-banking/types.ts`
-- Create: `lib/open-banking/client.ts`
+- Create: `lib/monzo/types.ts`
+- Create: `lib/monzo/client.ts`
 - Create: `app/auth/callback/route.ts`
 - Create: `app/(protected)/settings/page.tsx`
 
-**Step 1: 오픈뱅킹 타입 정의**
+**Step 1: Monzo type definitions**
 
 ```typescript
-// lib/open-banking/types.ts
+// lib/monzo/types.ts
 
-export interface OBTokenResponse {
+export interface MonzoTokenResponse {
   access_token: string
-  token_type: string
+  client_id: string
   expires_in: number
   refresh_token: string
-  scope: string
-  user_seq_no: string  // 금융결제원 사용자 일련번호
+  token_type: 'Bearer'
+  user_id: string
 }
 
-export interface OBTransaction {
-  tran_date: string       // YYYYMMDD
-  tran_time: string       // HHmmss
-  inout_type: 'OUT' | 'IN'
-  tran_type: string
-  tran_amt: string        // 거래 금액
-  after_balance_amt: string
-  tran_memo: string       // 가맹점명
-  branch_name: string
-  currency_code?: string  // 외화 코드 (없으면 KRW)
-  frgn_currency_tran_amt?: string  // 외화 금액
+export interface MonzoMerchant {
+  id: string
+  name: string
+  category: string
 }
 
-export interface OBTransactionListResponse {
-  api_tran_id: string
-  rsp_code: string
-  rsp_message: string
-  fin_use_num: string
-  list: OBTransaction[]
+export interface MonzoTransaction {
+  id: string                   // "tx_..."
+  created: string              // ISO 8601
+  description: string          // fallback merchant name
+  amount: number               // minor units (pence), negative = debit
+  currency: string             // account currency (GBP)
+  local_amount: number         // minor units in local currency
+  local_currency: string       // foreign currency code if abroad
+  merchant: MonzoMerchant | null
+  category: string
+  settled: string              // ISO 8601, empty string if pending
+  decline_reason: string | null
+}
+
+export interface MonzoTransactionListResponse {
+  transactions: MonzoTransaction[]
+}
+
+export interface MonzoAccountsResponse {
+  accounts: Array<{
+    id: string
+    description: string
+    created: string
+  }>
 }
 ```
 
-**Step 2: 오픈뱅킹 클라이언트 생성**
+**Step 2: Monzo client**
 
 ```typescript
-// lib/open-banking/client.ts
-import type { OBTokenResponse, OBTransactionListResponse } from './types'
+// lib/monzo/client.ts
+import type { MonzoTokenResponse, MonzoTransactionListResponse, MonzoAccountsResponse } from './types'
 
-const BASE_URL = process.env.OPEN_BANKING_BASE_URL!
-const CLIENT_ID = process.env.OPEN_BANKING_CLIENT_ID!
-const CLIENT_SECRET = process.env.OPEN_BANKING_CLIENT_SECRET!
+const AUTH_URL = 'https://auth.monzo.com'
+const API_URL = 'https://api.monzo.com'
+const CLIENT_ID = process.env.MONZO_CLIENT_ID!
+const CLIENT_SECRET = process.env.MONZO_CLIENT_SECRET!
 
 export function getAuthorizationUrl(state: string): string {
   const params = new URLSearchParams({
-    response_type: 'code',
     client_id: CLIENT_ID,
     redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
-    scope: 'login inquiry',
+    response_type: 'code',
     state,
-    auth_type: '0',
   })
-  return `${BASE_URL}/oauth/2.0/authorize?${params}`
+  return `${AUTH_URL}/?${params}`
 }
 
-export async function exchangeCodeForToken(code: string): Promise<OBTokenResponse> {
-  const res = await fetch(`${BASE_URL}/oauth/2.0/token`, {
+export async function exchangeCodeForToken(code: string): Promise<MonzoTokenResponse> {
+  const res = await fetch(`${API_URL}/oauth2/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      code,
+      grant_type: 'authorization_code',
       client_id: CLIENT_ID,
       client_secret: CLIENT_SECRET,
       redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
-      grant_type: 'authorization_code',
+      code,
     }),
   })
   if (!res.ok) throw new Error(`Token exchange failed: ${res.status}`)
   return res.json()
 }
 
-export async function refreshAccessToken(refreshToken: string): Promise<OBTokenResponse> {
-  const res = await fetch(`${BASE_URL}/oauth/2.0/token`, {
+export async function refreshAccessToken(refreshToken: string): Promise<MonzoTokenResponse> {
+  const res = await fetch(`${API_URL}/oauth2/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
+      grant_type: 'refresh_token',
       client_id: CLIENT_ID,
       client_secret: CLIENT_SECRET,
       refresh_token: refreshToken,
-      grant_type: 'refresh_token',
     }),
   })
   if (!res.ok) throw new Error(`Token refresh failed: ${res.status}`)
   return res.json()
 }
 
+export async function fetchAccounts(accessToken: string): Promise<MonzoAccountsResponse> {
+  const res = await fetch(`${API_URL}/accounts`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) throw new Error(`Accounts fetch failed: ${res.status}`)
+  return res.json()
+}
+
 export async function fetchTransactions(
   accessToken: string,
-  finUseNum: string,
-  fromDate: string, // YYYYMMDD
-  toDate: string
-): Promise<OBTransactionListResponse> {
+  accountId: string,
+  since: string, // ISO 8601
+  before: string // ISO 8601
+): Promise<MonzoTransactionListResponse> {
   const params = new URLSearchParams({
-    bank_tran_id: `${CLIENT_ID}U${Date.now()}`,
-    fintech_use_num: finUseNum,
-    inquiry_type: 'A',
-    inquiry_base: 'D',
-    from_date: fromDate,
-    to_date: toDate,
-    sort_order: 'D',
-    tran_dtime: new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14),
+    account_id: accountId,
+    since,
+    before,
+    'expand[]': 'merchant',
   })
-
-  const res = await fetch(
-    `${BASE_URL}/v2.0/account/transaction/list/fin_use_num?${params}`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
-  )
-  if (!res.ok) throw new Error(`Transaction fetch failed: ${res.status}`)
+  const res = await fetch(`${API_URL}/transactions?${params}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) throw new Error(`Transactions fetch failed: ${res.status}`)
   return res.json()
 }
 ```
 
-**Step 3: OAuth 콜백 Route Handler 생성**
+**Step 3: OAuth callback route handler**
 
 ```typescript
 // app/auth/callback/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { exchangeCodeForToken } from '@/lib/open-banking/client'
+import { exchangeCodeForToken, fetchAccounts } from '@/lib/monzo/client'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -1135,14 +1143,18 @@ export async function GET(request: NextRequest) {
     const token = await exchangeCodeForToken(code)
     const expiresAt = new Date(Date.now() + token.expires_in * 1000).toISOString()
 
-    // 기존 토큰 upsert
+    // fetch the user's first current account ID
+    const { accounts } = await fetchAccounts(token.access_token)
+    const account = accounts.find(a => !a.description.includes('joint')) ?? accounts[0]
+
     await supabase
-      .from('open_banking_tokens')
+      .from('monzo_tokens')
       .upsert({
         user_id: user.id,
         access_token: token.access_token,
         refresh_token: token.refresh_token,
         expires_at: expiresAt,
+        account_id: account?.id ?? null,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' })
 
@@ -1154,12 +1166,12 @@ export async function GET(request: NextRequest) {
 }
 ```
 
-**Step 4: Settings 페이지 생성 (계좌 연동 + 로그아웃)**
+**Step 4: Settings page (account connection + sign out)**
 
 ```typescript
 // app/(protected)/settings/page.tsx
 import { createClient } from '@/lib/supabase/server'
-import { getAuthorizationUrl } from '@/lib/open-banking/client'
+import { getAuthorizationUrl } from '@/lib/monzo/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { logout } from '@/app/(auth)/login/actions'
@@ -1170,8 +1182,8 @@ export default async function SettingsPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   const { data: token } = await supabase
-    .from('open_banking_tokens')
-    .select('bank_account_no, updated_at')
+    .from('monzo_tokens')
+    .select('account_id, updated_at')
     .eq('user_id', user!.id)
     .single()
 
@@ -1181,36 +1193,36 @@ export default async function SettingsPage() {
     <div className="max-w-2xl mx-auto p-6 space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/dashboard" className="text-sm text-slate-500 hover:text-slate-700">
-          ← 대시보드
+          ← Dashboard
         </Link>
-        <h1 className="text-2xl font-bold">설정</h1>
+        <h1 className="text-2xl font-bold">Settings</h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>오픈뱅킹 계좌 연동</CardTitle>
+          <CardTitle>Monzo Account</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {token ? (
             <div className="space-y-2">
-              <p className="text-sm text-green-600 font-medium">연동 완료</p>
-              {token.bank_account_no && (
-                <p className="text-sm text-slate-600">계좌: {token.bank_account_no}</p>
+              <p className="text-sm text-green-600 font-medium">Connected</p>
+              {token.account_id && (
+                <p className="text-sm text-slate-600">Account ID: {token.account_id}</p>
               )}
               <p className="text-sm text-slate-400">
-                마지막 업데이트: {new Date(token.updated_at).toLocaleString('ko-KR')}
+                Last updated: {new Date(token.updated_at).toLocaleString('en-GB')}
               </p>
               <a href={connectUrl}>
-                <Button variant="outline" size="sm">재연동</Button>
+                <Button variant="outline" size="sm">Reconnect</Button>
               </a>
             </div>
           ) : (
             <div className="space-y-2">
               <p className="text-sm text-slate-600">
-                토스뱅크 계좌를 연동하면 결제 내역이 자동으로 수집됩니다.
+                Connect your Monzo account to automatically import transactions.
               </p>
               <a href={connectUrl}>
-                <Button>계좌 연동하기</Button>
+                <Button>Connect Monzo</Button>
               </a>
             </div>
           )}
@@ -1219,12 +1231,12 @@ export default async function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>계정</CardTitle>
+          <CardTitle>Account</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-slate-600 mb-4">{user!.email}</p>
           <form action={logout}>
-            <Button variant="destructive" type="submit">로그아웃</Button>
+            <Button variant="destructive" type="submit">Sign Out</Button>
           </form>
         </CardContent>
       </Card>
@@ -1233,7 +1245,7 @@ export default async function SettingsPage() {
 }
 ```
 
-**Step 5: Protected layout 생성**
+**Step 5: Protected layout**
 
 ```typescript
 // app/(protected)/layout.tsx
@@ -1254,29 +1266,29 @@ export default async function ProtectedLayout({
 }
 ```
 
-**Step 6: 동작 확인**
+**Step 6: Verify dev server**
 
 ```bash
 npm run dev
 ```
 
-로그인 후 `/settings` 접근 → "계좌 연동하기" 버튼 확인
+Sign in and visit `/settings` → confirm "Connect Monzo" button is visible.
 
 **Step 7: Commit**
 
 ```bash
-git add app/ lib/open-banking/
-git commit -m "feat: add Open Banking OAuth flow and settings page"
+git add src/app/ src/lib/monzo/
+git commit -m "feat: add Monzo OAuth flow and settings page"
 ```
 
 ---
 
-## Task 9: 폴링 Edge Function + pg_cron
+## Task 9: Polling Edge Function + pg_cron
 
 **Files:**
 - Create: `supabase/functions/poll-transactions/index.ts`
 
-**Step 1: Edge Function 생성**
+**Step 1: Create Edge Function**
 
 ```typescript
 // supabase/functions/poll-transactions/index.ts
@@ -1284,21 +1296,20 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-const OB_BASE_URL = Deno.env.get('OPEN_BANKING_BASE_URL')!
-const OB_CLIENT_ID = Deno.env.get('OPEN_BANKING_CLIENT_ID')!
-const OB_CLIENT_SECRET = Deno.env.get('OPEN_BANKING_CLIENT_SECRET')!
+const MONZO_CLIENT_ID = Deno.env.get('MONZO_CLIENT_ID')!
+const MONZO_CLIENT_SECRET = Deno.env.get('MONZO_CLIENT_SECRET')!
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-async function refreshToken(refreshToken: string) {
-  const res = await fetch(`${OB_BASE_URL}/oauth/2.0/token`, {
+async function refreshMonzoToken(refreshToken: string) {
+  const res = await fetch('https://api.monzo.com/oauth2/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      client_id: OB_CLIENT_ID,
-      client_secret: OB_CLIENT_SECRET,
-      refresh_token: refreshToken,
       grant_type: 'refresh_token',
+      client_id: MONZO_CLIENT_ID,
+      client_secret: MONZO_CLIENT_SECRET,
+      refresh_token: refreshToken,
     }),
   })
   if (!res.ok) throw new Error('Token refresh failed')
@@ -1307,19 +1318,18 @@ async function refreshToken(refreshToken: string) {
 
 async function fetchEstimatedRate(currency: string, date: string): Promise<number | null> {
   try {
-    const res = await fetch(`https://api.frankfurter.app/${date}?from=${currency}&to=KRW`)
+    const res = await fetch(`https://api.frankfurter.app/${date}?from=${currency}&to=GBP`)
     if (!res.ok) return null
     const data = await res.json()
-    return data.rates?.KRW ?? null
+    return data.rates?.GBP ?? null
   } catch {
     return null
   }
 }
 
 Deno.serve(async () => {
-  // 모든 유저의 토큰 조회
   const { data: tokens, error } = await supabase
-    .from('open_banking_tokens')
+    .from('monzo_tokens')
     .select('*')
 
   if (error || !tokens?.length) {
@@ -1328,18 +1338,18 @@ Deno.serve(async () => {
 
   for (const tokenRow of tokens) {
     try {
-      let { access_token, refresh_token, expires_at, user_id, bank_account_no } = tokenRow
+      let { access_token, refresh_token, expires_at, user_id, account_id } = tokenRow
 
-      // 토큰 만료 10분 전이면 갱신
+      // refresh if expiring within 10 minutes
       const expiresAt = new Date(expires_at)
       if (expiresAt.getTime() - Date.now() < 10 * 60 * 1000) {
-        const newToken = await refreshToken(refresh_token)
+        const newToken = await refreshMonzoToken(refresh_token)
         access_token = newToken.access_token
         refresh_token = newToken.refresh_token
         const newExpiresAt = new Date(Date.now() + newToken.expires_in * 1000).toISOString()
 
         await supabase
-          .from('open_banking_tokens')
+          .from('monzo_tokens')
           .update({
             access_token,
             refresh_token,
@@ -1349,70 +1359,65 @@ Deno.serve(async () => {
           .eq('id', tokenRow.id)
       }
 
-      // 최근 거래내역 조회 (오늘 기준 7일)
-      const today = new Date()
-      const toDate = today.toISOString().slice(0, 10).replace(/-/g, '')
-      const fromDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
-        .toISOString().slice(0, 10).replace(/-/g, '')
+      // fetch last 7 days of transactions
+      const before = new Date().toISOString()
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-      const tranRes = await fetch(
-        `${OB_BASE_URL}/v2.0/account/transaction/list/fin_use_num?` +
-        new URLSearchParams({
-          bank_tran_id: `${OB_CLIENT_ID}U${Date.now()}`,
-          fintech_use_num: bank_account_no,
-          inquiry_type: 'A',
-          inquiry_base: 'D',
-          from_date: fromDate,
-          to_date: toDate,
-          sort_order: 'D',
-          tran_dtime: new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14),
-        }),
-        { headers: { Authorization: `Bearer ${access_token}` } }
-      )
+      const params = new URLSearchParams({
+        account_id,
+        since,
+        before,
+        'expand[]': 'merchant',
+      })
+
+      const tranRes = await fetch(`https://api.monzo.com/transactions?${params}`, {
+        headers: { Authorization: `Bearer ${access_token}` },
+      })
 
       if (!tranRes.ok) continue
-      const data = await tranRes.json()
-      const transactions = data.list ?? []
+      const { transactions } = await tranRes.json()
 
       for (const tx of transactions) {
-        if (tx.inout_type !== 'OUT') continue // 지출만 저장
+        // skip credits, pending, and top-ups
+        if (tx.amount >= 0 || !tx.settled || tx.decline_reason) continue
 
-        const txDate = `${tx.tran_date.slice(0, 4)}-${tx.tran_date.slice(4, 6)}-${tx.tran_date.slice(6, 8)}`
-        const currency = tx.currency_code || 'KRW'
-        const amount = parseFloat(tx.frgn_currency_tran_amt || tx.tran_amt)
-        const krwDeducted = tx.frgn_currency_tran_amt ? parseInt(tx.tran_amt) : null
+        const txDate = tx.created.slice(0, 10) // YYYY-MM-DD
+
+        // Monzo amounts are in minor units (pence), negative for debits
+        const isLocal = tx.currency === tx.local_currency
+        const currency = isLocal ? tx.currency : tx.local_currency
+        // convert from minor units to major units
+        const amount = Math.abs(tx.local_amount) / 100
+        const gbpDeducted = Math.abs(tx.amount) / 100
 
         let exchange_rate: number | null = null
         let krw_amount: number | null = null
         let is_estimated_rate = false
 
-        if (currency === 'KRW') {
+        if (isLocal) {
+          // GBP transaction — no conversion needed
           exchange_rate = 1
-          krw_amount = Math.round(amount)
-        } else if (krwDeducted !== null) {
-          krw_amount = krwDeducted
-          exchange_rate = krwDeducted / amount
+          krw_amount = null // no KRW conversion for GBP-native transactions
         } else {
-          const rate = await fetchEstimatedRate(currency, txDate)
-          if (rate) {
-            exchange_rate = rate
-            krw_amount = Math.round(amount * rate)
-            is_estimated_rate = true
-          } else {
-            is_estimated_rate = true
-          }
+          // foreign currency — back-calculate rate from GBP deducted
+          exchange_rate = gbpDeducted / amount
+          krw_amount = null // not used; GBP is the base currency
+          is_estimated_rate = false
         }
+
+        const merchantName = tx.merchant?.name ?? tx.description
 
         await supabase.from('transactions').upsert({
           user_id,
-          transaction_id: `${tx.tran_date}${tx.tran_time}${tx.tran_memo}`,
+          transaction_id: tx.id,
           amount,
           currency,
           exchange_rate,
           krw_amount,
           is_estimated_rate,
-          merchant_name: tx.tran_memo,
-          transacted_at: `${txDate}T${tx.tran_time.slice(0, 2)}:${tx.tran_time.slice(2, 4)}:${tx.tran_time.slice(4, 6)}+09:00`,
+          merchant_name: merchantName,
+          category: tx.category,
+          transacted_at: tx.created,
         }, { onConflict: 'transaction_id', ignoreDuplicates: true })
       }
     } catch (err) {
@@ -1424,16 +1429,15 @@ Deno.serve(async () => {
 })
 ```
 
-**Step 2: Edge Function 시크릿 설정**
+**Step 2: Set Edge Function secrets**
 
 ```bash
 npx supabase secrets set \
-  OPEN_BANKING_BASE_URL=https://testapi.openbanking.or.kr \
-  OPEN_BANKING_CLIENT_ID=your-client-id \
-  OPEN_BANKING_CLIENT_SECRET=your-client-secret
+  MONZO_CLIENT_ID=your-client-id \
+  MONZO_CLIENT_SECRET=your-client-secret
 ```
 
-**Step 3: Edge Function 배포**
+**Step 3: Deploy Edge Function**
 
 ```bash
 npx supabase functions deploy poll-transactions
@@ -1441,15 +1445,13 @@ npx supabase functions deploy poll-transactions
 
 Expected: `Deployed Function poll-transactions`
 
-**Step 4: pg_cron 설정 (Supabase SQL Editor에서 실행)**
-
-Supabase 대시보드 → SQL Editor에서 실행:
+**Step 4: Set up pg_cron (run in Supabase SQL Editor)**
 
 ```sql
--- pg_net 확장 활성화 (HTTP 요청용)
+-- enable pg_net extension for HTTP requests
 create extension if not exists pg_net;
 
--- 5분마다 poll-transactions 호출
+-- call poll-transactions every 5 minutes
 select cron.schedule(
   'poll-transactions',
   '*/5 * * * *',
@@ -1465,13 +1467,13 @@ select cron.schedule(
 );
 ```
 
-`your-project-ref`는 Supabase 프로젝트 레퍼런스로 교체.
+Replace `your-project-ref` with your Supabase project reference.
 
 **Step 5: Commit**
 
 ```bash
 git add supabase/functions/
-git commit -m "feat: add polling Edge Function with pg_cron schedule"
+git commit -m "feat: add Monzo polling Edge Function with pg_cron schedule"
 ```
 
 ---
@@ -2098,8 +2100,8 @@ git commit -m "feat: complete smart-money-tracker MVP"
 - [ ] Task 5: 로그인/회원가입 페이지
 - [ ] Task 6: 환율 계산 유틸리티 (TDD)
 - [ ] Task 7: 지출 집계 유틸리티 (TDD)
-- [ ] Task 8: 오픈뱅킹 OAuth 연동
-- [ ] Task 9: 폴링 Edge Function + pg_cron
+- [ ] Task 8: Monzo OAuth integration
+- [ ] Task 9: Polling Edge Function + pg_cron
 - [ ] Task 10: 대시보드 페이지
 - [ ] Task 11: 지출내역 페이지 + 영수증 업로드
 - [ ] Task 12: E2E 테스트
