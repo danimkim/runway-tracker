@@ -3,7 +3,7 @@ import {
   calculateExchangeRate,
   fetchEstimatedRate,
   buildTransactionRateData,
-} from '@/lib/utils/exchange-rate'
+} from '@/features/transactions/utils/exchange-rate'
 
 describe('calculateExchangeRate', () => {
   it('returns rate 1 and is_estimated_rate false for KRW transactions', () => {

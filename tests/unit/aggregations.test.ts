@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { groupByDay, groupByWeek, groupByMonth } from '@/lib/utils/aggregations'
+import { groupByDay, groupByWeek, groupByMonth } from '@/features/transactions/utils/aggregations'
 
 const now = new Date()
 const year = now.getFullYear()

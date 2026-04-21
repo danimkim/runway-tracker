@@ -2,6 +2,7 @@
   "name": "smart-money-tracker",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "yarn@1.22.17",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -32,6 +33,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.1.4",
+    "agentation": "^2.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "jsdom": "^28.1.0",

@@ -3,7 +3,7 @@
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
-import type { DataPoint } from '@/lib/utils/aggregations'
+import type { DataPoint } from '@/features/transactions/utils/aggregations'
 
 interface SpendingChartProps {
   data: DataPoint[]

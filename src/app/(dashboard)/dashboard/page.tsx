@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { SpendingChart } from '@/components/charts/SpendingChart'
-import { groupByDay, groupByWeek, groupByMonth } from '@/lib/utils/aggregations'
+import { SpendingChart } from '@/features/dashboard/components/SpendingChart'
+import { groupByDay, groupByWeek, groupByMonth } from '@/features/transactions/utils/aggregations'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
