@@ -29,7 +29,7 @@ export default function LoginPage() {
         <form className="auth-form" action={loginAction}>
           <div className="field-group">
             <label className="field-label" htmlFor="email">
-              이메일
+              Email
             </label>
             <input
               className="field-input"
@@ -42,7 +42,7 @@ export default function LoginPage() {
           </div>
           <div className="field-group">
             <label className="field-label" htmlFor="password">
-              비밀번호
+              Password
             </label>
             <input
               className="field-input"
@@ -55,12 +55,12 @@ export default function LoginPage() {
           </div>
           {state?.error && <p style={{ color: 'var(--color-warning)', fontSize: 13, marginTop: 4 }}>{state.error}</p>}
           <button type="submit" className="btn-primary" style={{ marginTop: 8 }} disabled={isPending}>
-            {isPending ? '로그인 중...' : '로그인'}
+            {isPending ? 'Signing in...' : 'Sign In'}
           </button>
           <p className="auth-switch">
-            계정이 없으신가요?{' '}
+            Don't have an account?{' '}
             <Link href="/signup" className="auth-link">
-              회원가입
+              Sign Up
             </Link>
           </p>
         </form>
