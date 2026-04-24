@@ -101,3 +101,26 @@ html, body {
 
 /* Field margin helper */
 .field-group { margin-bottom: 16px; }
+
+/* Onboarding */
+.ob-progress { display: flex; gap: 8px; padding: 24px 24px 0; }
+.ob-step { flex: 1; height: 4px; border-radius: 2px; background: var(--color-border); }
+.ob-step-active { background: var(--color-accent); }
+.ob-step-done { background: var(--color-success); }
+.ob-step-label { font-size: 12px; font-weight: 600; color: var(--color-text-muted); letter-spacing: 0.5px; text-transform: uppercase; }
+.ob-heading { font-size: 24px; font-weight: 800; color: var(--color-text-primary); letter-spacing: -0.5px; line-height: 1.3; margin-top: 8px; }
+.ob-desc { font-size: 14px; color: var(--color-text-muted); margin-top: 8px; }
+
+/* Account card input */
+.account-card-input { display: flex; align-items: center; gap: 12px; background: white; border: 1.5px solid var(--color-border-input); border-radius: var(--radius-item); padding: 16px; }
+.account-card-input-flag { font-size: 28px; line-height: 1; flex-shrink: 0; }
+.account-card-input-label { font-size: 12px; font-weight: 600; color: var(--color-text-muted); margin-bottom: 4px; }
+.account-num-input { flex: 1; border: none; outline: none; font-size: 20px; font-weight: 700; color: var(--color-text-primary); background: transparent; font-family: inherit; width: 100%; -moz-appearance: textfield; }
+.account-num-input::-webkit-outer-spin-button,
+.account-num-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.account-num-input::placeholder { color: var(--color-text-faint); font-weight: 500; }
+
+/* Date picker */
+.date-picker-card { background: white; border: 1.5px solid var(--color-border-input); border-radius: var(--radius-item); padding: 16px; }
+.date-dday-preview { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.dday-chip { background: var(--color-accent); color: white; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-badge); }
