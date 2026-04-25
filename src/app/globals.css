@@ -1,23 +1,30 @@
 @import "tailwindcss";
 
-:root {
-  --color-bg: #EEF0F8;
-  --color-bg-card: #FFFFFF;
-  --color-bg-subtle: #F7F8FC;
-  --color-bg-input: #FFFFFF;
-  --color-border: #EEF0F8;
-  --color-border-input: #D8DCE9;
-
-  --color-text-primary: #2A3140;
-  --color-text-secondary: #5A6478;
-  --color-text-muted: #8991B2;
-  --color-text-faint: #AAB5C5;
+@theme {
+  --color-primary: #2A3140;
+  --color-secondary: #5A6478;
+  --color-muted: #8991B2;
+  --color-faint: #AAB5C5;
+  --color-label: #7A849A;
+  --color-light: #B0B9D3;
 
   --color-accent: #3B424E;
   --color-accent-hover: #2A3140;
 
+  --color-surface: #EEF0F8;
+  --color-card: #FFFFFF;
+  --color-subtle: #F7F8FC;
+
+  --color-border: #EEF0F8;
+  --color-border-input: #D8DCE9;
+
   --color-warning: #E8845C;
+  --color-warning-bg: #FFF4EF;
+  --color-warning-text: #C05A30;
+
   --color-success: #5BB98A;
+  --color-success-bg: #EFFAF5;
+  --color-success-text: #2A7A52;
 
   --radius-card: 20px;
   --radius-item: 16px;
@@ -32,7 +39,7 @@
 
 html, body {
   height: 100%;
-  background: var(--color-bg);
+  background: var(--color-surface);
   font-family: var(--font-sans), 'Plus Jakarta Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -40,7 +47,7 @@ html, body {
 /* Screen shell */
 .screen {
   min-height: 100dvh;
-  background: var(--color-bg);
+  background: var(--color-surface);
   position: relative;
 }
 .has-bottom-nav { padding-bottom: 72px; }
@@ -60,22 +67,22 @@ html, body {
   align-items: center;
   gap: 10px;
 }
-.auth-title { font-size: 26px; font-weight: 800; color: var(--color-text-primary); letter-spacing: -0.5px; }
-.auth-sub { font-size: 14px; color: var(--color-text-muted); font-weight: 500; }
+.auth-title { font-size: 26px; font-weight: 800; color: var(--color-primary); letter-spacing: -0.5px; }
+.auth-sub { font-size: 14px; color: var(--color-muted); font-weight: 500; }
 .auth-form { padding: 0 24px 40px; display: flex; flex-direction: column; gap: 0; }
-.auth-switch { font-size: 14px; color: var(--color-text-secondary); text-align: center; margin-top: 20px; }
-.auth-link { color: var(--color-text-muted); font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.auth-switch { font-size: 14px; color: var(--color-secondary); text-align: center; margin-top: 20px; }
+.auth-link { color: var(--color-muted); font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 
 /* Fields */
-.field-label { display: block; font-size: 13px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 6px; }
+.field-label { display: block; font-size: 13px; font-weight: 600; color: var(--color-secondary); margin-bottom: 6px; }
 .field-input {
   width: 100%; border: 1.5px solid var(--color-border-input); border-radius: 12px;
-  padding: 12px 14px; font-size: 15px; font-weight: 500; color: var(--color-text-primary);
+  padding: 12px 14px; font-size: 15px; font-weight: 500; color: var(--color-primary);
   background: white; outline: none; transition: border-color 0.15s;
   -webkit-appearance: none; font-family: inherit;
 }
-.field-input:focus { border-color: var(--color-text-muted); }
-.field-prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 15px; font-weight: 600; color: var(--color-text-secondary); pointer-events: none; }
+.field-input:focus { border-color: var(--color-muted); }
+.field-prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 15px; font-weight: 600; color: var(--color-secondary); pointer-events: none; }
 
 /* Buttons */
 .btn-primary {
@@ -84,17 +91,17 @@ html, body {
   cursor: pointer; font-family: inherit; transition: background 0.15s;
 }
 .btn-primary:hover { background: var(--color-accent-hover); }
-.btn-primary:disabled { background: var(--color-text-faint); cursor: not-allowed; }
+.btn-primary:disabled { background: var(--color-faint); cursor: not-allowed; }
 
 /* Quick action buttons */
 .quick-action-btn {
   background: white; border: none; border-radius: var(--radius-item); padding: 18px 12px;
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   cursor: pointer; box-shadow: var(--shadow-card); font-family: inherit;
-  font-size: 12px; font-weight: 600; color: var(--color-text-secondary);
+  font-size: 12px; font-weight: 600; color: var(--color-secondary);
   transition: background 0.15s;
 }
-.quick-action-btn:hover { background: var(--color-bg-subtle); }
+.quick-action-btn:hover { background: var(--color-subtle); }
 
 /* Back button */
 .back-btn { background: none; border: none; cursor: pointer; padding: 4px; }
@@ -107,20 +114,25 @@ html, body {
 .ob-step { flex: 1; height: 4px; border-radius: 2px; background: var(--color-border); }
 .ob-step-active { background: var(--color-accent); }
 .ob-step-done { background: var(--color-success); }
-.ob-step-label { font-size: 12px; font-weight: 600; color: var(--color-text-muted); letter-spacing: 0.5px; text-transform: uppercase; }
-.ob-heading { font-size: 24px; font-weight: 800; color: var(--color-text-primary); letter-spacing: -0.5px; line-height: 1.3; margin-top: 8px; }
-.ob-desc { font-size: 14px; color: var(--color-text-muted); margin-top: 8px; }
+.ob-step-label { font-size: 12px; font-weight: 600; color: var(--color-muted); letter-spacing: 0.5px; text-transform: uppercase; }
+.ob-heading { font-size: 24px; font-weight: 800; color: var(--color-primary); letter-spacing: -0.5px; line-height: 1.3; margin-top: 8px; }
+.ob-desc { font-size: 14px; color: var(--color-muted); margin-top: 8px; }
 
 /* Account card input */
 .account-card-input { display: flex; align-items: center; gap: 12px; background: white; border: 1.5px solid var(--color-border-input); border-radius: var(--radius-item); padding: 16px; }
 .account-card-input-flag { font-size: 28px; line-height: 1; flex-shrink: 0; }
-.account-card-input-label { font-size: 12px; font-weight: 600; color: var(--color-text-muted); margin-bottom: 4px; }
-.account-num-input { flex: 1; border: none; outline: none; font-size: 20px; font-weight: 700; color: var(--color-text-primary); background: transparent; font-family: inherit; width: 100%; -moz-appearance: textfield; }
+.account-card-input-label { font-size: 12px; font-weight: 600; color: var(--color-muted); margin-bottom: 4px; }
+.account-num-input { flex: 1; border: none; outline: none; font-size: 20px; font-weight: 700; color: var(--color-primary); background: transparent; font-family: inherit; width: 100%; -moz-appearance: textfield; }
 .account-num-input::-webkit-outer-spin-button,
 .account-num-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.account-num-input::placeholder { color: var(--color-text-faint); font-weight: 500; }
+.account-num-input::placeholder { color: var(--color-faint); font-weight: 500; }
 
 /* Date picker */
 .date-picker-card { background: white; border: 1.5px solid var(--color-border-input); border-radius: var(--radius-item); padding: 16px; }
 .date-dday-preview { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
 .dday-chip { background: var(--color-accent); color: white; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-badge); }
+
+/* Runway card gradient */
+.runway-card {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-secondary) 100%);
+}
