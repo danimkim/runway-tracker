@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Runway Tracker
 
-## Getting Started
+A personal finance tracker specifically designed for managing dual-currency assets (KRW/GBP) and calculating financial survival. Unlike traditional budgeting apps, it works backward from a target end date to answer: **"Given my current savings, what is my daily spending ceiling?"**
 
-First, run the development server:
+## Motivation
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Managing finances in a foreign country without a local income source presents unique challenges. **Runway Tracker** was built to address two primary needs:
+
+- **Runway-Centric Budgeting**: Living on fixed savings (KRW) that must be converted into a local currency (GBP) requires a "runway" mindset. This app focuses on the future—calculating exactly how much you can afford to spend daily or weekly to reach your target date without exhausting your funds.
+- **Receipt Digitisation**: To eliminate the clutter of physical paper receipts, the app allows users to upload and store receipt images for every transaction, maintaining a clean, digital financial record.
+
+## Key Features
+
+- **Dual-Currency Runway Calculation** — Integrated KRW and GBP balance tracking to calculate remaining days and dynamic daily budget limits.
+- **Deterministic GBP Balance** — Ensures data integrity by calculating GBP balance as: `Initial + Total FX Deposits − Total Transactions`.
+- **Smart Exchange Integration** — Fetches live KRW/GBP rates via [Frankfurter API](https://www.frankfurter.app/) with daily caching.
+- **Transaction Management** — Organised views for GBP spending and KRW exchange records with manual category tagging.
+- **Mobile-First Design** — A refined, purple-grey design system optimised for mobile browsers (430px max-width) using the Plus Jakarta Sans typeface.
+
+## DEMO (TBA)
+
+## Technical Challenges & Solutions
+
+### Banking Data Integration via PDF Parsing
+
+As an individual developer, accessing official banking APIs in South Korea is often restricted. To overcome this:
+
+**The Solution**: Instead of direct API integration, the app implements a parsing logic for transaction history PDFs exported from the bank. This allows for accurate data synchronisation while remaining independent of restricted financial APIs.
+
+## Tech Stack
+
+| Layer           | Technology                             |
+| --------------- | -------------------------------------- |
+| Framework       | Next.js 16 + React 19 + TypeScript     |
+| Database        | Supabase (PostgreSQL + RLS + Auth)     |
+| Styling         | Tailwind CSS v4 + shadcn/ui + Radix UI |
+| Charts          | Recharts                               |
+| Testing         | Vitest + Playwright                    |
+| Package manager | Yarn                                   |
+
+## Project Structure
+
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+src/
+├── app/               # Routing only — pages, layouts, route handlers
+│   ├── (auth)/        # Login, onboarding
+│   ├── (dashboard)/   # Protected pages
+│   └── auth/callback/ # Supabase OAuth callback
+├── components/
+│   ├── ui/            # shadcn/ui primitives
+│   └── layout/        # BottomNav, SubPageHeader, etc.
+├── features/          # Domain modules
+│   ├── auth/
+│   ├── dashboard/
+│   └── transactions/
+├── lib/
+│   ├── supabase/      # client, server, middleware, types
+│   ├── balance.ts     # GBP/KRW reverse-calculation
+│   ├── exchange-rate.ts
+│   └── runway.ts
+└── proxy.ts
+```
