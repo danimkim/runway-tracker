@@ -23,3 +23,13 @@ export const CATEGORY_COLORS: Record<CategoryName, string> = {
   Healthcare: '#AAB5C5',
   Other: '#BBBBC4',
 };
+
+export const CATEGORY_EMOJI: Record<CategoryName, string> = {
+  Food: '🍱',
+  Transport: '🚇',
+  Groceries: '🛒',
+  Dining: '🍽️',
+  Shopping: '🛍️',
+  Healthcare: '💊',
+  Other: '📦',
+};

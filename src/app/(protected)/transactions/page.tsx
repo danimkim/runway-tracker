@@ -1,102 +1,185 @@
-'use client'
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { CATEGORY_COLORS, CATEGORY_EMOJI, CategoryName, isCategoryName } from '@/lib/categories';
+import { getGBPTransactions, getKRWTransactions } from '@/services/transactions';
+import { groupByDate } from '@/features/transactions/utils/grouping';
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { ReceiptUpload } from '@/features/transactions/components/ReceiptUpload'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
+export default async function TransactionsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const { tab = 'GBP' } = await searchParams;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
 
-export default function TransactionsPage() {
-  const [transactions, setTransactions] = useState<any[]>([])
-  const [userId, setUserId] = useState<string>('')
-  const supabase = createClient()
+  const txs = tab === 'GBP'
+    ? await getGBPTransactions(user.id)
+    : await getKRWTransactions(user.id);
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      setUserId(user.id)
-
-      const { data } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('transacted_at', { ascending: false })
-
-      if (data) setTransactions(data)
-    }
-    load()
-  }, [])
-
-  // group transactions by date
-  const grouped = transactions.reduce((acc, tx) => {
-    const date = new Date(tx.transacted_at).toLocaleDateString('en-GB', {
-      year: 'numeric', month: 'long', day: 'numeric'
-    })
-    if (!acc[date]) acc[date] = []
-    acc[date].push(tx)
-    return acc
-  }, {} as Record<string, any[]>)
-
-  function handleReceiptUpload(txId: string, url: string) {
-    setTransactions(prev =>
-      prev.map(tx => tx.id === txId ? { ...tx, receipt_url: url } : tx)
-    )
-  }
+  const total = txs.reduce((s, t) => s + (t.amount ?? 0), 0);
+  const grouped = groupByDate(txs);
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="sm">← Dashboard</Button>
-        </Link>
-        <h1 className="text-2xl font-bold">Transactions</h1>
+    <div className="screen has-bottom-nav overflow-y-auto">
+      {/* Header */}
+      <div
+        className="bg-white border-b border-border"
+        style={{ padding: '56px 20px 0' }}
+      >
+        <h1 className="text-[22px] font-bold text-primary" style={{ marginBottom: 14 }}>
+          Transactions
+        </h1>
+        <div
+          className="flex bg-surface"
+          style={{ borderRadius: 'var(--radius-btn)', padding: 3, marginBottom: 16 }}
+        >
+          {(['GBP', 'KRW'] as const).map((t) => (
+            <Link
+              key={t}
+              href={`/transactions?tab=${t}`}
+              className="flex-1 font-semibold text-sm text-center no-underline block"
+              style={{
+                padding: '8px 0',
+                borderRadius: 10,
+                background: tab === t ? 'white' : 'transparent',
+                color: tab === t ? 'var(--color-primary)' : 'var(--color-muted)',
+                boxShadow: tab === t ? '0 1px 4px rgba(59,66,78,0.1)' : 'none',
+              }}
+            >
+              {t === 'GBP' ? '🇬🇧 GBP' : '🇰🇷 KRW'}
+            </Link>
+          ))}
+        </div>
       </div>
 
-      {Object.entries(grouped).map(([date, txs]) => (
-        <div key={date}>
-          <h2 className="text-sm font-semibold text-slate-500 mb-2">{date}</h2>
-          <div className="space-y-2">
-            {(txs as any[]).map(tx => (
-              <Card key={tx.id}>
-                <CardContent className="pt-4 pb-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium">{tx.merchant_name ?? 'Unknown'}</p>
-                      <p className="text-xs text-slate-400">
-                        {new Date(tx.transacted_at).toLocaleTimeString('en-GB', {
-                          hour: '2-digit', minute: '2-digit'
-                        })}
-                      </p>
+      {/* Content */}
+      <div className="flex flex-col" style={{ padding: '16px 20px 120px', gap: 16 }}>
+        {/* Total card */}
+        <div
+          className="bg-white flex justify-between items-center"
+          style={{
+            borderRadius: 'var(--radius-item)',
+            padding: '14px 16px',
+            boxShadow: 'var(--shadow-card)',
+          }}
+        >
+          <div>
+            <p className="text-xs text-muted font-medium">This month</p>
+            <p className="text-[20px] font-bold text-primary" style={{ marginTop: 2 }}>
+              {tab === 'GBP' ? `£${total.toFixed(2)}` : `₩${total.toLocaleString()}`}
+            </p>
+          </div>
+          <Link
+            href="/upload"
+            className="bg-accent text-white font-semibold text-[13px] no-underline"
+            style={{ borderRadius: 10, padding: '8px 14px' }}
+          >
+            Upload PDF
+          </Link>
+        </div>
+
+        {/* Grouped transactions */}
+        {grouped.map(([date, dayTxs]) => (
+          <div key={date}>
+            <p className="text-xs font-semibold text-muted" style={{ marginBottom: 8 }}>
+              {new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { month: 'long', day: 'numeric' })}
+            </p>
+            <div
+              className="bg-white overflow-hidden"
+              style={{ borderRadius: 'var(--radius-item)', boxShadow: 'var(--shadow-card)' }}
+            >
+              {dayTxs.map((tx, i) => {
+                const cat = isCategoryName(tx.category ?? '') ? (tx.category as CategoryName) : null;
+                const catColor = cat ? CATEGORY_COLORS[cat] : null;
+
+                const inner = (
+                  <>
+                    <div className="flex items-center" style={{ gap: 12 }}>
+                      <div
+                        className="flex items-center justify-center text-base shrink-0"
+                        style={{
+                          width: 38,
+                          height: 38,
+                          borderRadius: 'var(--radius-btn)',
+                          background: catColor ? catColor + '22' : '#FFF0EB',
+                        }}
+                      >
+                        {cat ? CATEGORY_EMOJI[cat] : '❓'}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-primary">{tx.merchant}</p>
+                        <span
+                          className="text-[11px] font-semibold"
+                          style={{
+                            color: catColor ?? 'var(--color-warning)',
+                            background: catColor ? catColor + '22' : '#FFF0EB',
+                            borderRadius: 'var(--radius-badge)',
+                            padding: '2px 7px',
+                          }}
+                        >
+                          {tx.category ?? 'Uncategorized'}
+                        </span>
+                      </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">
-                        {tx.currency} {Number(tx.amount).toFixed(2)}
-                      </p>
-                      {tx.is_estimated_rate && (
-                        <p className="text-xs text-slate-400">*estimated rate</p>
+                      <p className="text-sm font-bold text-primary">{tx.displayAmount}</p>
+                      {tx.linkable && (
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 14 14"
+                          fill="none"
+                          style={{ marginTop: 4 }}
+                        >
+                          <path
+                            d="M5 3l4 4-4 4"
+                            stroke="#B0B9D3"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
                       )}
                     </div>
-                  </div>
-                  <div className="mt-2">
-                    <ReceiptUpload
-                      transactionId={tx.id}
-                      userId={userId}
-                      currentReceiptUrl={tx.receipt_url}
-                      onUpload={(url) => handleReceiptUpload(tx.id, url)}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      ))}
+                  </>
+                );
 
-      {transactions.length === 0 && (
-        <p className="text-center text-slate-400 py-12">No transactions yet.</p>
-      )}
+                const sharedStyle: React.CSSProperties = {
+                  padding: '13px 16px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  borderBottom: i < dayTxs.length - 1 ? '1px solid #F5F6FA' : 'none',
+                };
+
+                return tx.linkable ? (
+                  <Link
+                    key={tx.id}
+                    href={`/transactions/${tx.id}`}
+                    style={{ ...sharedStyle, textDecoration: 'none' }}
+                  >
+                    {inner}
+                  </Link>
+                ) : (
+                  <div key={tx.id} style={sharedStyle}>
+                    {inner}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
+        {txs.length === 0 && (
+          <div className="text-center text-faint" style={{ padding: '48px 0' }}>
+            <p className="text-[32px]" style={{ marginBottom: 8 }}>
+              📭
+            </p>
+            <p className="text-sm">No transactions yet</p>
+          </div>
+        )}
+      </div>
     </div>
-  )
+  );
 }
