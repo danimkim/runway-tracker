@@ -6,54 +6,9 @@ import { getExchangeRate } from '@/lib/exchange-rate';
 import { DonutChart } from '@/components/charts/DonutChart';
 import { isCategoryName, CATEGORY_COLORS } from '@/lib/categories';
 import AccountCard from '@/features/dashboard/components/AccountCard';
-
-function fKRW(v: number) {
-  return '₩' + Math.round(Math.abs(v)).toLocaleString('ko-KR');
-}
-function fGBP(v: number) {
-  return '£' + Math.abs(v).toFixed(2);
-}
-
-function toLocalDateStr(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function getWeeklySpending(transactions: { transacted_at: string; amount: number | null }[]) {
-  const today = new Date();
-  return Array.from({ length: 5 }, (_, i) => {
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - today.getDay() - (4 - i) * 7);
-    weekStart.setHours(0, 0, 0, 0);
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
-
-    const startStr = toLocalDateStr(weekStart);
-    const endStr = toLocalDateStr(weekEnd);
-
-    const amount = transactions
-      .filter((t) => t.transacted_at >= startStr && t.transacted_at <= endStr)
-      .reduce((s, t) => s + (t.amount ?? 0), 0);
-
-    return { label: `${weekStart.getMonth() + 1}/${weekStart.getDate()}`, amount };
-  });
-}
-
-function WeeklyBarChart({ data }: { data: { label: string; amount: number }[] }) {
-  const max = Math.max(...data.map((d) => d.amount), 1);
-  return (
-    <div className="flex items-end gap-1.5 h-20 px-1">
-      {data.map((d, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center gap-1">
-          <div
-            className={`w-full rounded-badge ${i === data.length - 1 ? 'bg-accent' : 'bg-light'}`}
-            style={{ height: Math.max(4, (d.amount / max) * 68) }}
-          />
-          <span className="text-[10px] text-muted font-medium">{d.label}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
+import { formatGBP, formatKRW } from '@/features/dashboard/utils/formatter';
+import WeeklyBarChart from '@/features/dashboard/components/WeekilyBarChart';
+import getWeeklySpending from '@/features/dashboard/utils/calculate-weekly-spending';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -165,8 +120,8 @@ export default async function DashboardPage() {
         {/* Account cards */}
         <div className="flex gap-2.5">
           {[
-            { flag: '🇰🇷', label: 'Korean Won (KRW)', currency: 'KRW', amount: krwBalance, fmt: fKRW },
-            { flag: '🇬🇧', label: 'British Pound (GBP)', currency: 'GBP', amount: gbpBalance, fmt: fGBP },
+            { flag: '🇰🇷', label: 'Korean Won (KRW)', currency: 'KRW', amount: krwBalance, fmt: formatKRW },
+            { flag: '🇬🇧', label: 'British Pound (GBP)', currency: 'GBP', amount: gbpBalance, fmt: formatGBP },
           ].map((acc) => (
             <AccountCard key={acc.currency} {...acc} />
           ))}
@@ -176,7 +131,7 @@ export default async function DashboardPage() {
         {runway && (
           <div className="runway-card rounded-card p-6 text-white">
             <p className="text-[11px] text-light font-medium tracking-wide uppercase">Total Runway (KRW)</p>
-            <p className="text-[32px] font-extrabold mt-1 tracking-[-0.5px]">{fKRW(runway.totalKRW)}</p>
+            <p className="text-[32px] font-extrabold mt-1 tracking-[-0.5px]">{formatKRW(runway.totalKRW)}</p>
             <p className="text-[12px] text-light/70 mt-1">£1 = ₩{exchangeRate.toLocaleString()} · Updated daily</p>
             {/* Progress bar */}
             <div className="mt-2">
@@ -187,14 +142,14 @@ export default async function DashboardPage() {
                     width: `${usedRatio * 100}%`,
                     background:
                       usedRatio > 0.8
-                        ? 'linear-gradient(90deg,#E8845C,#E85C6A)'
-                        : 'linear-gradient(90deg,#AAB5C5,#D4D9ED)',
+                        ? 'linear-gradient(90deg,var(--color-warning),#E85C6A)'
+                        : 'linear-gradient(90deg,var(--color-faint),#D4D9ED)',
                   }}
                 />
               </div>
               <div className="flex justify-between mt-1.5">
-                <span className="text-[11px] text-light/70">{fKRW(monthTotalKRW)}</span>
-                <span className="text-[11px] text-light/50">{fKRW(runway.totalKRW)}</span>
+                <span className="text-[11px] text-light/70">{formatKRW(monthTotalKRW)}</span>
+                <span className="text-[11px] text-light/50">{formatKRW(runway.totalKRW)}</span>
               </div>
             </div>
           </div>
@@ -202,7 +157,7 @@ export default async function DashboardPage() {
 
         {/* Runway Insights */}
         {runway && (
-          <div className="bg-card rounded-card p-5 shadow-card">
+          <div className="bg-card rounded-card p-5 shadow-(--shadow-card)">
             <div className="flex justify-between items-center mb-3.5">
               <p className="text-sm font-semibold text-primary">Runway Insights</p>
               <div className="bg-surface rounded-lg px-2.5 py-1">
@@ -212,13 +167,13 @@ export default async function DashboardPage() {
             <div className="grid grid-cols-2 gap-2.5 mb-3.5">
               <div className="bg-subtle rounded-btn p-3">
                 <p className="text-[11px] text-muted font-medium">Daily Budget</p>
-                <p className="text-base font-bold text-primary mt-[3px]">{fKRW(runway.dailyBudgetKRW)}</p>
+                <p className="text-base font-bold text-primary mt-[3px]">{formatKRW(runway.dailyBudgetKRW)}</p>
                 <p className="text-[11px] text-faint mt-0.5">≈ £{runway.dailyBudgetGBP}/day</p>
               </div>
               <div className="bg-subtle rounded-btn p-3">
                 <p className="text-[11px] text-muted font-medium">30-day Average</p>
                 <p className={`text-base font-bold mt-[3px] ${isOver ? 'text-warning' : 'text-primary'}`}>
-                  {fKRW(actualDailyKRW)}
+                  {formatKRW(actualDailyKRW)}
                 </p>
                 <p className="text-[11px] text-faint mt-0.5">Actual spend/day</p>
               </div>
@@ -237,7 +192,7 @@ export default async function DashboardPage() {
         )}
 
         {/* This Month */}
-        <div className="bg-card rounded-card p-5 shadow-card">
+        <div className="bg-card rounded-card p-5 shadow-(--shadow-card)">
           <p className="text-[17px] font-bold text-primary">This Month</p>
           <p className="text-[13px] text-muted mt-0.5 mb-3.5">
             {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
@@ -264,13 +219,13 @@ export default async function DashboardPage() {
             <span className="text-[13px] text-label">Total Spent</span>
             <div className="text-right">
               <span className="text-sm font-bold text-primary">£{monthTotal.toFixed(2)}</span>
-              <span className="text-xs text-muted ml-1.5">≈ {fKRW(monthTotalKRW)}</span>
+              <span className="text-xs text-muted ml-1.5">≈ {formatKRW(monthTotalKRW)}</span>
             </div>
           </div>
         </div>
 
         {/* Weekly Spending */}
-        <div className="bg-card rounded-card p-5 shadow-card">
+        <div className="bg-card rounded-card p-5 shadow-(--shadow-card)">
           <p className="text-[17px] font-bold text-primary mb-3.5">Weekly Spending</p>
           <WeeklyBarChart data={weeklySpending} />
         </div>
@@ -278,7 +233,7 @@ export default async function DashboardPage() {
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-2.5">
           <a href="/upload" className="quick-action-btn">
-            <svg width="24" height="24" viewBox="0 0 22 22" fill="none" style={{ marginBottom: 8 }}>
+            <svg width="24" height="24" viewBox="0 0 22 22" fill="none" className="mb-2">
               <rect x="4" y="2" width="14" height="18" rx="3" stroke="#8991B2" strokeWidth="1.7" />
               <path d="M8 7h6M8 10h6M8 13h4" stroke="#8991B2" strokeWidth="1.5" strokeLinecap="round" />
               <circle cx="17" cy="17" r="4.5" fill="#3B424E" />
@@ -287,7 +242,7 @@ export default async function DashboardPage() {
             <span>Upload PDF</span>
           </a>
           <a href="/exchange" className="quick-action-btn">
-            <svg width="24" height="24" viewBox="0 0 22 22" fill="none" style={{ marginBottom: 8 }}>
+            <svg width="24" height="24" viewBox="0 0 22 22" fill="none" className="mb-2">
               <path
                 d="M4 8h14M4 8l3-3M4 8l3 3"
                 stroke="#8991B2"
