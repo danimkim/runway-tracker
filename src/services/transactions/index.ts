@@ -1,5 +1,25 @@
 import { createClient } from '@/lib/supabase/server'
 
+export interface TxDetail {
+  id: string
+  merchant_name: string | null
+  amount: number | null
+  transacted_at: string | null
+  category: string | null
+  receipt_url: string | null
+}
+
+export async function getTransactionById(id: string, userId: string): Promise<TxDetail | null> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('transactions')
+    .select('id, merchant_name, amount, transacted_at, category, receipt_url')
+    .eq('id', id)
+    .eq('user_id', userId)
+    .single()
+  return data ?? null
+}
+
 export interface TxItem {
   id: string
   merchant: string
