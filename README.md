@@ -17,7 +17,7 @@ Managing finances in a foreign country without a local income source presents un
 - **Transaction Management** — Organised views for GBP spending and KRW exchange records with manual category tagging.
 - **Mobile-First Design** — A refined, purple-grey design system optimised for mobile browsers (430px max-width) using the Plus Jakarta Sans typeface.
 
-## DEMO (TBA)
+## Demo (TBA)
 
 ## Technical Challenges & Solutions
 
