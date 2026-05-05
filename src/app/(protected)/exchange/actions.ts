@@ -23,5 +23,5 @@ export async function saveExchangeRecord(formData: FormData) {
     exchanged_at: exchangedAt,
   });
 
-  redirect('/settings');
+  redirect('/transactions?tab=KRW');
 }
