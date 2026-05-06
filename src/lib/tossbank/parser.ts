@@ -12,7 +12,7 @@ export async function parseTossBankPDF(buffer: Buffer): Promise<ParseResult> {
     const transactions = parseTossBankText(text);
     return { ok: true, transactions };
   } catch (e) {
-    return { ok: false, transactions: [], error: (e as Error).message };
+    return { ok: false, transactions: [], error: e instanceof Error ? e.message : String(e) };
   }
 }
 
@@ -34,7 +34,7 @@ function cleanText(text: string): string {
 
 function parseChunk(chunk: string): TossBankTransaction | null {
   const lines = chunk.split('\n').map((l) => l.trim()).filter(Boolean);
-  if (lines.length < 6) return null;
+  if (lines.length < 7) return null;
 
   const dateMatch = lines[0].match(/^(\d{4})\.(\d{2})\.(\d{2})\.$/);
   const timeMatch = lines[1]?.match(/^(\d{2}:\d{2}:\d{2})$/);
@@ -47,8 +47,12 @@ function parseChunk(chunk: string): TossBankTransaction | null {
   const approval_no = statusMatch[2];
 
   const exchange_rate = parseFloat(lines[lines.length - 3].replace(/,/g, ''));
+  if (isNaN(exchange_rate) || exchange_rate <= 0) return null;
   const currencyPair = lines[lines.length - 2];
-  const local_currency = currencyPair.split('/')[0] as 'GBP' | 'EUR' | 'USD';
+  const SUPPORTED_CURRENCIES = ['GBP', 'EUR', 'USD'] as const;
+  const rawCurrency = currencyPair.split('/')[0];
+  if (!SUPPORTED_CURRENCIES.includes(rawCurrency as 'GBP' | 'EUR' | 'USD')) return null;
+  const local_currency = rawCurrency as 'GBP' | 'EUR' | 'USD';
 
   const afterApprovalOnLine2 = lines[2].slice(statusMatch[0].length);
   const middleLines = lines.slice(3, lines.length - 3);
