@@ -6,6 +6,9 @@ const pdfParse = require('pdf-parse/lib/pdf-parse.js') as (
 ) => Promise<{ text: string }>;
 import type { TossBankTransaction, ParseResult } from './types';
 
+const SUPPORTED_CURRENCIES = ['GBP', 'EUR', 'USD'] as const;
+type SupportedCurrency = (typeof SUPPORTED_CURRENCIES)[number];
+
 export async function parseTossBankPDF(buffer: Buffer): Promise<ParseResult> {
   try {
     const { text } = await pdfParse(buffer);
@@ -34,7 +37,7 @@ function cleanText(text: string): string {
 
 function parseChunk(chunk: string): TossBankTransaction | null {
   const lines = chunk.split('\n').map((l) => l.trim()).filter(Boolean);
-  if (lines.length < 7) return null;
+  if (lines.length < 6) return null;
 
   const dateMatch = lines[0].match(/^(\d{4})\.(\d{2})\.(\d{2})\.$/);
   const timeMatch = lines[1]?.match(/^(\d{2}:\d{2}:\d{2})$/);
@@ -49,16 +52,16 @@ function parseChunk(chunk: string): TossBankTransaction | null {
   const exchange_rate = parseFloat(lines[lines.length - 3].replace(/,/g, ''));
   if (isNaN(exchange_rate) || exchange_rate <= 0) return null;
   const currencyPair = lines[lines.length - 2];
-  const SUPPORTED_CURRENCIES = ['GBP', 'EUR', 'USD'] as const;
   const rawCurrency = currencyPair.split('/')[0];
-  if (!SUPPORTED_CURRENCIES.includes(rawCurrency as 'GBP' | 'EUR' | 'USD')) return null;
-  const local_currency = rawCurrency as 'GBP' | 'EUR' | 'USD';
+  if (!SUPPORTED_CURRENCIES.includes(rawCurrency as SupportedCurrency)) return null;
+  const local_currency = rawCurrency as SupportedCurrency;
 
   const afterApprovalOnLine2 = lines[2].slice(statusMatch[0].length);
   const middleLines = lines.slice(3, lines.length - 3);
   const middleText = [afterApprovalOnLine2, ...middleLines].join(' ').trim();
 
-  const feeKrwMatch = middleText.match(/-([\d.]+)\s*(?:GBP|EUR|USD)([\d,]+)\s*$/);
+  const currencyAlt = SUPPORTED_CURRENCIES.join('|');
+  const feeKrwMatch = middleText.match(new RegExp(`-([\\d.]+)\\s*(?:${currencyAlt})([\\d,]+)\\s*$`));
   if (!feeKrwMatch) return null;
   const fee = parseFloat(feeKrwMatch[1]);
   const krw_amount = parseInt(feeKrwMatch[2].replace(/,/g, ''), 10);
@@ -85,6 +88,7 @@ function parseChunk(chunk: string): TossBankTransaction | null {
   const amtIdx = middleText.search(localCurrRe);
   const rawMerchant = middleText.slice(0, amtIdx).trim();
   const merchant_name = rawMerchant.replace(/\d+$/, '').trim() || rawMerchant;
+  if (!merchant_name) return null;
 
   return { transacted_at, status, approval_no, merchant_name, local_amount, local_currency, krw_amount, exchange_rate };
 }
