@@ -1,8 +1,9 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import type { TossBankTransaction } from '@/lib/tossbank/types';
 
-type State = 'idle' | 'uploading' | 'success' | 'error';
+type State = 'idle' | 'uploading' | 'preview' | 'saving' | 'success' | 'error';
 
 interface UploadResult {
   inserted: number;
@@ -16,6 +17,7 @@ interface Props {
 export function StatementUpload({ onSuccess }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<State>('idle');
+  const [parsed, setParsed] = useState<TossBankTransaction[]>([]);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -34,7 +36,6 @@ export function StatementUpload({ onSuccess }: Props) {
 
     setState('uploading');
     setErrorMsg(null);
-    setResult(null);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -45,6 +46,30 @@ export function StatementUpload({ onSuccess }: Props) {
 
       if (!res.ok) {
         setErrorMsg(data.error ?? 'Upload failed.');
+        setState('error');
+        return;
+      }
+
+      setParsed(data.transactions ?? []);
+      setState('preview');
+    } catch {
+      setErrorMsg('Network error. Please try again.');
+      setState('error');
+    }
+  }
+
+  async function handleConfirm() {
+    setState('saving');
+    try {
+      const res = await fetch('/api/upload/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactions: parsed }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrorMsg(data.error ?? 'Failed to save transactions.');
         setState('error');
         return;
       }
@@ -71,35 +96,86 @@ export function StatementUpload({ onSuccess }: Props) {
     if (file) handleFile(file);
   }
 
+  function reset() {
+    setState('idle');
+    setParsed([]);
+    setErrorMsg(null);
+    setResult(null);
+  }
+
+  const isDropZoneActive = state === 'idle' || state === 'error';
+
   return (
     <div className="flex flex-col gap-3.5">
-      {/* Drop zone */}
-      <div
-        className={`bg-card rounded-card shadow-card p-6 flex flex-col items-center gap-3 transition-colors ${dragging ? 'bg-surface' : ''}`}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={handleDrop}
-      >
-        <div className="w-12 h-12 rounded-item bg-surface flex items-center justify-center text-2xl">📄</div>
-        <div className="text-center">
-          <p className="text-sm font-semibold text-primary">TossBank Card Statement</p>
-          <p className="text-[13px] text-muted mt-1">
-            Export from TossBank app → Foreign account → Transaction history
-          </p>
-        </div>
-        <input ref={inputRef} type="file" accept="application/pdf" className="hidden" onChange={handleInputChange} />
-        <button
-          type="button"
-          className="btn-secondary w-full"
-          disabled={state === 'uploading'}
-          onClick={() => inputRef.current?.click()}
+      {/* Drop zone — only shown when not in preview/saving/success */}
+      {state !== 'preview' && state !== 'saving' && state !== 'success' && (
+        <div
+          className={`bg-card rounded-card shadow-card p-6 flex flex-col items-center gap-3 transition-colors ${dragging ? 'bg-surface' : ''}`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            if (isDropZoneActive) setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={isDropZoneActive ? handleDrop : (e) => e.preventDefault()}
         >
-          {state === 'uploading' ? 'Uploading…' : 'Select PDF'}
-        </button>
-      </div>
+          <div className="w-12 h-12 rounded-item bg-surface flex items-center justify-center text-2xl">📄</div>
+          <div className="text-center">
+            <p className="text-sm font-semibold text-primary">Bank Statement</p>
+            <p className="text-[13px] text-muted mt-1">
+              {state === 'uploading' ? 'Parsing PDF…' : 'Drag & drop or click to select'}
+            </p>
+          </div>
+          <input ref={inputRef} type="file" accept="application/pdf" className="hidden" onChange={handleInputChange} />
+          <button
+            type="button"
+            className="btn-secondary w-full"
+            disabled={state === 'uploading'}
+            onClick={() => inputRef.current?.click()}
+          >
+            {state === 'uploading' ? 'Uploading…' : 'Select PDF'}
+          </button>
+        </div>
+      )}
+
+      {/* Preview */}
+      {state === 'preview' && (
+        <div className="bg-card rounded-card shadow-card overflow-hidden">
+          <div className="px-5 pt-5 pb-4 border-b border-border">
+            <p className="text-sm font-semibold text-primary">
+              {parsed.length} transaction{parsed.length !== 1 ? 's' : ''} found
+            </p>
+            <p className="text-[13px] text-muted mt-0.5">Review before importing</p>
+          </div>
+          <ul className="divide-y divide-border max-h-72 overflow-y-auto">
+            {parsed.map((t) => (
+              <li key={t.approval_no} className="flex items-center justify-between px-5 py-3 gap-3">
+                <div className="min-w-0">
+                  <p className="text-[13px] font-medium text-primary truncate">{t.merchant_name}</p>
+                  <p className="text-[11px] text-muted">{t.transacted_at}</p>
+                </div>
+                <p className="text-[13px] font-semibold text-primary shrink-0">
+                  {t.local_amount} {t.local_currency}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <div className="flex gap-2.5 p-4">
+            <button type="button" className="btn-secondary flex-1" onClick={reset}>
+              Cancel
+            </button>
+            <button type="button" className="btn-primary flex-1" onClick={handleConfirm}>
+              Import {parsed.length}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Saving spinner */}
+      {state === 'saving' && (
+        <div className="bg-card rounded-card shadow-card p-6 flex flex-col items-center gap-3">
+          <p className="text-sm text-muted">Saving transactions…</p>
+        </div>
+      )}
 
       {/* Success */}
       {state === 'success' && result && (
@@ -111,7 +187,7 @@ export function StatementUpload({ onSuccess }: Props) {
             ✓
           </span>
           <div>
-            <p className="text-sm font-semibold text-primary">Upload complete</p>
+            <p className="text-sm font-semibold text-primary">Import complete</p>
             <p className="text-[13px] text-muted mt-0.5">
               {result.inserted} transactions added
               {result.skipped > 0 ? ` (${result.skipped} duplicates skipped)` : ''}
@@ -140,10 +216,7 @@ export function StatementUpload({ onSuccess }: Props) {
               type="button"
               className="text-[13px] font-medium mt-2 underline"
               style={{ color: 'var(--color-warning-text)' }}
-              onClick={() => {
-                setState('idle');
-                setErrorMsg(null);
-              }}
+              onClick={reset}
             >
               Try again
             </button>
