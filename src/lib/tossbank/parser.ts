@@ -85,7 +85,7 @@ function parseChunk(chunk: string): TossBankTransaction | null {
     }
   }
 
-  const amtIdx = middleText.search(localCurrRe);
+  const amtIdx = localMatch.index!;
   const rawMerchant = middleText.slice(0, amtIdx).trim();
   const merchant_name = rawMerchant.replace(/\d+$/, '').trim() || rawMerchant;
   if (!merchant_name) return null;
