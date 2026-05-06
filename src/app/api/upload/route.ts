@@ -14,6 +14,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'File must be a PDF' }, { status: 400 });
   }
 
+  if (file.size > 20 * 1024 * 1024) {
+    return NextResponse.json({ error: 'File too large (max 20 MB)' }, { status: 413 });
+  }
+
   const buffer = Buffer.from(await file.arrayBuffer());
   const result = await parseTossBankPDF(buffer);
 
