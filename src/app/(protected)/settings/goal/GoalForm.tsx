@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { updateTargetDate } from './actions';
 
 interface GoalFormProps {
@@ -9,12 +10,23 @@ interface GoalFormProps {
 }
 
 export function GoalForm({ currentTarget, currentDaysLeft }: GoalFormProps) {
+  const router = useRouter();
   const [date, setDate] = useState(currentTarget ?? '');
+  const [state, formAction, isPending] = useActionState(updateTargetDate, null);
 
   const daysLeft = date ? Math.ceil((new Date(date + 'T00:00:00').getTime() - Date.now()) / 86_400_000) : null;
 
+  useEffect(() => {
+    if (state?.success) {
+      const timer = setTimeout(() => router.push('/settings'), 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [state, router]);
+
+  const btnClass = state?.success ? 'btn-primary transition-colors duration-300 !bg-emerald-500' : 'btn-primary';
+
   return (
-    <form action={updateTargetDate} className="flex flex-col gap-[14px]">
+    <form action={formAction} className="flex flex-col gap-[14px]">
       <div className="bg-white rounded-item p-4 shadow-card">
         {/* Current target row */}
         <div className="flex justify-between mb-3">
@@ -44,8 +56,10 @@ export function GoalForm({ currentTarget, currentDaysLeft }: GoalFormProps) {
         )}
       </div>
 
-      <button type="submit" className="btn-primary">
-        Save
+      {state?.success === false && <p className="text-sm text-red-500 text-center">{state.error}</p>}
+
+      <button type="submit" disabled={isPending} className={btnClass}>
+        {isPending ? 'Saving...' : state?.success ? 'Saved!' : 'Save'}
       </button>
     </form>
   );
