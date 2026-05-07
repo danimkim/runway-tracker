@@ -3,24 +3,32 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-export async function addCategory(formData: FormData) {
+type ActionResult = { success: true } | { success: false; error: string };
+
+export async function addCategory(
+  _prevState: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!user) return { success: false, error: 'Not authenticated.' };
 
   const name = (formData.get('name') as string)?.trim();
-  if (!name) return;
+  if (!name) return { success: false, error: 'Name is required.' };
 
-  await supabase.from('categories').insert({
+  const { error } = await supabase.from('categories').insert({
     user_id: user.id,
     name,
     color: '#AAB5C5',
     emoji: '📦',
   });
 
+  if (error) return { success: false, error: 'Failed to add category.' };
+
   revalidatePath('/settings/categories');
+  return { success: true };
 }
 
 export async function updateCategoryName(formData: FormData) {
