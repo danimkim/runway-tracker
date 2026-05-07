@@ -67,7 +67,8 @@ export default async function DashboardPage() {
   // Data preprocessing for donut chart
   const catMap: Record<string, number> = {};
   thisMonthTransactions.forEach((t) => {
-    if (t.category) catMap[t.category] = (catMap[t.category] ?? 0) + (t.amount ?? 0);
+    const key = t.category ?? 'Uncategorized';
+    catMap[key] = (catMap[key] ?? 0) + (t.amount ?? 0);
   });
   const catSegments = Object.entries(catMap)
     .map(([name, value]) => ({ name, value }))
