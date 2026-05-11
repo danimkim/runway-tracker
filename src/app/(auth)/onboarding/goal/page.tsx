@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { saveOnboardingData } from '../actions';
-import DateField from './DateField';
+import DateField from '@/features/onboarding/components/DateField';
 
 export default async function OnboardingGoalPage({
   searchParams,
@@ -10,42 +10,30 @@ export default async function OnboardingGoalPage({
   const { krw = '', gbp = '' } = await searchParams;
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'white', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: 430, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+    <div className="min-h-dvh bg-white flex justify-center">
+      <div className="w-full max-w-[430px] flex flex-col relative">
         <div className="ob-progress">
           <div className="ob-step ob-step-done" />
           <div className="ob-step ob-step-active" />
         </div>
-        <Link
-          href="/onboarding/account"
-          className="back-btn"
-          style={{ position: 'absolute', top: 48, left: 20 }}
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path
-              d="M12 5L7 10L12 15"
-              stroke="#3B424E"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+        <Link href="/onboarding/account" className="back-btn absolute top-12 left-5">
+          <img src="/arrow.svg" width={20} height={20} alt="back" />
         </Link>
-        <div style={{ padding: '24px 24px 0' }}>
+        <div className="px-6 pt-6">
           <p className="ob-step-label">2 / 2</p>
           <h1 className="ob-heading">
-            언제까지 이 돈으로
+            How long do you plan
             <br />
-            생활할 예정인가요?
+            to live on this budget?
           </h1>
-          <p className="ob-desc">권장 일 예산 계산에 사용됩니다</p>
+          <p className="ob-desc">This is used to calculate your recommended daily budget</p>
         </div>
-        <form action={saveOnboardingData} className="auth-form" style={{ marginTop: 32 }}>
+        <form action={saveOnboardingData} className="auth-form mt-8">
           <input type="hidden" name="krwBalance" value={krw} />
           <input type="hidden" name="gbpBalance" value={gbp} />
           <DateField />
-          <button className="btn-primary" style={{ marginTop: 24 }} type="submit">
-            시작하기 →
+          <button className="btn-primary mt-6" type="submit">
+            Get Started →
           </button>
         </form>
       </div>
