@@ -13,9 +13,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const txs = tab === 'GBP'
-    ? await getGBPTransactions(user.id)
-    : await getKRWTransactions(user.id);
+  const txs = tab === 'GBP' ? await getGBPTransactions(user.id) : await getKRWTransactions(user.id);
 
   const total = txs.reduce((s, t) => s + (t.amount ?? 0), 0);
   const grouped = groupByDate(txs);
@@ -23,29 +21,18 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
   return (
     <div className="screen has-bottom-nav overflow-y-auto">
       {/* Header */}
-      <div
-        className="bg-white border-b border-border"
-        style={{ padding: '56px 20px 0' }}
-      >
-        <h1 className="text-[22px] font-bold text-primary" style={{ marginBottom: 14 }}>
-          Transactions
-        </h1>
-        <div
-          className="flex bg-surface"
-          style={{ borderRadius: 'var(--radius-btn)', padding: 3, marginBottom: 16 }}
-        >
+      <div className="bg-white border-b border-border pt-14 px-5">
+        <h1 className="text-[22px] font-bold text-primary mb-[14px]">Transactions</h1>
+        <div className="flex bg-surface rounded-btn p-[3px] mb-4">
           {(['GBP', 'KRW'] as const).map((t) => (
             <Link
               key={t}
               href={`/transactions?tab=${t}`}
-              className="flex-1 font-semibold text-sm text-center no-underline block"
-              style={{
-                padding: '8px 0',
-                borderRadius: 10,
-                background: tab === t ? 'white' : 'transparent',
-                color: tab === t ? 'var(--color-primary)' : 'var(--color-muted)',
-                boxShadow: tab === t ? '0 1px 4px rgba(59,66,78,0.1)' : 'none',
-              }}
+              className={`flex-1 font-semibold text-sm text-center no-underline block py-2 rounded-[10px] ${
+                tab === t
+                  ? 'bg-white text-(--color-primary) shadow-[0_1px_4px_rgba(59,66,78,0.1)]'
+                  : 'bg-transparent text-muted'
+              }`}
             >
               {t === 'GBP' ? '🇬🇧 GBP' : '🇰🇷 KRW'}
             </Link>
@@ -54,26 +41,18 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
       </div>
 
       {/* Content */}
-      <div className="flex flex-col" style={{ padding: '16px 20px 120px', gap: 16 }}>
+      <div className="flex flex-col pt-4 px-5 pb-[120px] gap-4">
         {/* Total card */}
-        <div
-          className="bg-white flex justify-between items-center"
-          style={{
-            borderRadius: 'var(--radius-item)',
-            padding: '14px 16px',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
+        <div className="bg-white flex justify-between items-center rounded-item py-[14px] px-4 shadow-(--shadow-card)">
           <div>
             <p className="text-xs text-muted font-medium">This month</p>
-            <p className="text-[20px] font-bold text-primary" style={{ marginTop: 2 }}>
+            <p className="text-[20px] font-bold text-primary mt-0.5">
               {tab === 'GBP' ? `£${total.toFixed(2)}` : `₩${total.toLocaleString()}`}
             </p>
           </div>
           <Link
             href="/upload"
-            className="bg-accent text-white font-semibold text-[13px] no-underline"
-            style={{ borderRadius: 10, padding: '8px 14px' }}
+            className="bg-accent text-white font-semibold text-[13px] no-underline rounded-[10px] py-2 px-[14px]"
           >
             Upload PDF
           </Link>
@@ -82,40 +61,30 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         {/* Grouped transactions */}
         {grouped.map(([date, dayTxs]) => (
           <div key={date}>
-            <p className="text-xs font-semibold text-muted" style={{ marginBottom: 8 }}>
+            <p className="text-xs font-semibold text-muted mb-2">
               {new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { month: 'long', day: 'numeric' })}
             </p>
-            <div
-              className="bg-white overflow-hidden"
-              style={{ borderRadius: 'var(--radius-item)', boxShadow: 'var(--shadow-card)' }}
-            >
+            <div className="bg-white overflow-hidden rounded-item shadow-(--shadow-card)">
               {dayTxs.map((tx, i) => {
                 const cat = isCategoryName(tx.category ?? '') ? (tx.category as CategoryName) : null;
                 const catColor = cat ? CATEGORY_COLORS[cat] : null;
 
                 const inner = (
                   <>
-                    <div className="flex items-center" style={{ gap: 12 }}>
+                    <div className="flex items-center gap-3">
                       <div
-                        className="flex items-center justify-center text-base shrink-0"
-                        style={{
-                          width: 38,
-                          height: 38,
-                          borderRadius: 'var(--radius-btn)',
-                          background: catColor ? catColor + '22' : '#FFF0EB',
-                        }}
+                        className="flex items-center justify-center text-base shrink-0 w-[38px] h-[38px] rounded-btn"
+                        style={{ background: catColor ? catColor + '22' : 'var(--color-warning-bg)' }}
                       >
                         {cat ? CATEGORY_EMOJI[cat] : '❓'}
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-primary">{tx.merchant}</p>
                         <span
-                          className="text-[11px] font-semibold"
+                          className="text-[11px] font-semibold rounded-badge py-[2px] px-[7px]"
                           style={{
                             color: catColor ?? 'var(--color-warning)',
-                            background: catColor ? catColor + '22' : '#FFF0EB',
-                            borderRadius: 'var(--radius-badge)',
-                            padding: '2px 7px',
+                            background: catColor ? catColor + '22' : 'var(--color-warning-bg)',
                           }}
                         >
                           {tx.category ?? 'Uncategorized'}
@@ -125,16 +94,9 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                     <div className="text-right">
                       <p className="text-sm font-bold text-primary">{tx.displayAmount}</p>
                       {tx.linkable && (
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 14 14"
-                          fill="none"
-                          style={{ marginTop: 4 }}
-                        >
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-1 stroke-light">
                           <path
                             d="M5 3l4 4-4 4"
-                            stroke="#B0B9D3"
                             strokeWidth="1.5"
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -145,24 +107,16 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                   </>
                 );
 
-                const sharedStyle: React.CSSProperties = {
-                  padding: '13px 16px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  borderBottom: i < dayTxs.length - 1 ? '1px solid #F5F6FA' : 'none',
-                };
+                const rowClass = `py-[13px] px-4 flex justify-between items-center${
+                  i < dayTxs.length - 1 ? ' border-b border-subtle' : ''
+                }`;
 
                 return tx.linkable ? (
-                  <Link
-                    key={tx.id}
-                    href={`/transactions/${tx.id}`}
-                    style={{ ...sharedStyle, textDecoration: 'none' }}
-                  >
+                  <Link key={tx.id} href={`/transactions/${tx.id}`} className={`${rowClass} no-underline`}>
                     {inner}
                   </Link>
                 ) : (
-                  <div key={tx.id} style={sharedStyle}>
+                  <div key={tx.id} className={rowClass}>
                     {inner}
                   </div>
                 );
@@ -172,10 +126,8 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         ))}
 
         {txs.length === 0 && (
-          <div className="text-center text-faint" style={{ padding: '48px 0' }}>
-            <p className="text-[32px]" style={{ marginBottom: 8 }}>
-              📭
-            </p>
+          <div className="text-center text-faint py-12">
+            <p className="text-[32px] mb-2">📭</p>
             <p className="text-sm">No transactions yet</p>
           </div>
         )}
