@@ -3,12 +3,11 @@ import { redirect } from 'next/navigation';
 import { calcRunway } from '@/lib/runway';
 import { calcActualGBPBalance, calcActualKRWBalance } from '@/lib/balance';
 import { getExchangeRate } from '@/lib/exchange-rate';
-import { DonutChart } from '@/components/charts/DonutChart';
-import { isCategoryName, CATEGORY_COLORS } from '@/lib/categories';
 import AccountCard from '@/features/dashboard/components/AccountCard';
 import { formatGBP, formatKRW } from '@/features/dashboard/utils/formatter';
 import WeeklyBarChart from '@/features/dashboard/components/WeekilyBarChart';
 import getWeeklySpending from '@/features/dashboard/utils/calculate-weekly-spending';
+import MonthlySpendingChart from '@/features/dashboard/components/MonthlySpendingChart';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -63,16 +62,6 @@ export default async function DashboardPage() {
   const thisMonthTransactions = (transactions ?? []).filter((t) => t.transacted_at?.startsWith(thisMonthPrefix));
   const monthTotal = thisMonthTransactions.reduce((sum, t) => sum + (t.amount ?? 0), 0);
   const monthTotalKRW = Math.round(monthTotal * exchangeRate);
-
-  // Data preprocessing for donut chart
-  const catMap: Record<string, number> = {};
-  thisMonthTransactions.forEach((t) => {
-    const key = t.category ?? 'Uncategorized';
-    catMap[key] = (catMap[key] ?? 0) + (t.amount ?? 0);
-  });
-  const catSegments = Object.entries(catMap)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value);
 
   const dayOfMonth = new Date().getDate();
   const actualDailyKRW = thisMonthTransactions.length > 0 ? Math.round((monthTotal * exchangeRate) / dayOfMonth) : 0;
@@ -192,38 +181,8 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* This Month */}
-        <div className="bg-card rounded-card p-5 shadow-(--shadow-card)">
-          <p className="text-[17px] font-bold text-primary">This Month</p>
-          <p className="text-[13px] text-muted mt-0.5 mb-3.5">
-            {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
-          </p>
-          <div className="flex items-center gap-5">
-            <DonutChart segments={catSegments} colors={CATEGORY_COLORS} size={120} />
-            <div className="flex-1 flex flex-col gap-[7px]">
-              {catSegments.length === 0 && <p className="text-xs text-faint">No transactions this month</p>}
-              {catSegments.slice(0, 5).map((seg) => (
-                <div key={seg.name} className="flex justify-between items-center">
-                  <div className="flex items-center gap-1.5">
-                    <div
-                      className="w-2 h-2 rounded-[3px] shrink-0"
-                      style={{ background: isCategoryName(seg.name) ? CATEGORY_COLORS[seg.name] : '#ccc' }}
-                    />
-                    <span className="text-xs text-secondary">{seg.name}</span>
-                  </div>
-                  <span className="text-xs font-semibold text-accent">£{seg.value.toFixed(0)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="border-t border-border mt-3.5 pt-3 flex justify-between items-center">
-            <span className="text-[13px] text-label">Total Spent</span>
-            <div className="text-right">
-              <span className="text-sm font-bold text-primary">£{monthTotal.toFixed(2)}</span>
-              <span className="text-xs text-muted ml-1.5">≈ {formatKRW(monthTotalKRW)}</span>
-            </div>
-          </div>
-        </div>
+        {/* Monthly Spending */}
+        <MonthlySpendingChart transactions={transactions ?? []} exchangeRate={exchangeRate} />
 
         {/* Weekly Spending */}
         <div className="bg-card rounded-card p-5 shadow-(--shadow-card)">
