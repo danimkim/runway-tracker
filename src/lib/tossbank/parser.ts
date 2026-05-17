@@ -9,9 +9,22 @@ import type { TossBankTransaction, ParseResult } from './types';
 const SUPPORTED_CURRENCIES = ['GBP', 'EUR', 'USD'] as const;
 type SupportedCurrency = (typeof SUPPORTED_CURRENCIES)[number];
 
+const TOSSBANK_DOC_IDENTIFIER = 'Confirmation of Transaction Statement';
+
+export function isValidTossBankDocument(text: string): boolean {
+  return text.includes(TOSSBANK_DOC_IDENTIFIER);
+}
+
 export async function parseTossBankPDF(buffer: Buffer): Promise<ParseResult> {
   try {
     const { text } = await pdfParse(buffer);
+    if (!isValidTossBankDocument(text)) {
+      return {
+        ok: false,
+        transactions: [],
+        error: 'Please upload a Toss Bank overseas transaction statement PDF.',
+      };
+    }
     const transactions = parseTossBankText(text);
     return { ok: true, transactions };
   } catch (e) {
