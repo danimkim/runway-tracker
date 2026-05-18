@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { useActionState } from 'react'
 import Link from 'next/link'
@@ -13,7 +13,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-dvh bg-white flex justify-center">
       <div className="w-full max-w-[430px] flex flex-col">
         <div className="pt-5 px-6">
-          <Link href="/login" className="inline-flex items-center justify-center w-9 h-9">
+          <Link href="/login" aria-label="Back to login" className="inline-flex items-center justify-center w-9 h-9">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path
                 d="M12 5L7 10L12 15"
