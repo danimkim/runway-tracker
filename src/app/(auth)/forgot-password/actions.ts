@@ -16,10 +16,13 @@ export async function requestPasswordReset(
   const origin = headersList.get('origin') ?? ''
 
   const supabase = await createClient()
-  await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?next=/reset-password`,
-  })
+  try {
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${origin}/auth/callback?next=/reset-password`,
+    })
+  } catch {
+    // Silently ignore — always redirect to prevent email enumeration
+  }
 
-  // Always redirect regardless of whether the email exists (prevent enumeration)
   redirect('/forgot-password/confirm')
 }
