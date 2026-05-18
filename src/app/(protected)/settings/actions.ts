@@ -35,9 +35,11 @@ export async function verifyAndSendReset(
   const headersList = await headers()
   const origin = headersList.get('origin') ?? ''
 
-  await supabase.auth.resetPasswordForEmail(user.email, {
+  const { error: resetError } = await supabase.auth.resetPasswordForEmail(user.email, {
     redirectTo: `${origin}/auth/callback?next=/reset-password`,
   })
+
+  if (resetError) return { error: 'Failed to send reset email. Please try again.' }
 
   return { success: true }
 }
