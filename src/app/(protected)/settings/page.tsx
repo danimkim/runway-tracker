@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { logout } from '@/app/(protected)/settings/actions';
+import { ChangePasswordModal } from '@/features/settings/components/ChangePasswordModal';
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -131,6 +132,14 @@ export default async function SettingsPage() {
               <p className="text-[15px] font-semibold text-primary">Contact</p>
               <p className="text-xs text-muted mt-px">danimkim.dev@gmail.com</p>
             </div>
+          </div>
+        </div>
+
+        {/* SECURITY section */}
+        <div>
+          <p className="text-xs font-semibold text-muted mb-2 pl-1 tracking-[0.5px] uppercase">Security</p>
+          <div className="bg-card rounded-item overflow-hidden shadow-card">
+            <ChangePasswordModal userEmail={user!.email!} />
           </div>
         </div>
 
