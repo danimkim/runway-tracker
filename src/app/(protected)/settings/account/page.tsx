@@ -38,46 +38,29 @@ export default async function ManageAccountsPage() {
   ];
 
   return (
-    <div className="screen" style={{ overflowY: 'auto' }}>
+    <div className="screen overflow-y-auto">
       <SubPageHeader title="Manage Accounts" backHref="/settings" />
 
       <form
         action={updateAccountBalances}
-        style={{
-          padding: '20px 20px 100px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-        }}
+        className="px-5 pt-5 pb-[100px] flex flex-col gap-4"
       >
         {accountFields.map((acc) => (
           <div
             key={acc.name}
-            style={{
-              background: 'white',
-              borderRadius: 16,
-              padding: 16,
-              boxShadow: '0 1px 4px rgba(59,66,78,0.06)',
-            }}
+            className="bg-card rounded-item p-4 shadow-card"
           >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 8,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center gap-1.5">
                 <span>{acc.flag}</span>
-                <span style={{ fontSize: 14, fontWeight: 600, color: '#2A3140' }}>
+                <span className="text-sm font-semibold text-primary">
                   {acc.label}
                 </span>
               </div>
-              <span style={{ fontSize: 13, color: '#AAB5C5' }}>{acc.current}</span>
+              <span className="text-[13px] text-faint">{acc.current}</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 16, fontWeight: 600, color: '#3B424E' }}>
+            <div className="flex items-center gap-1.5">
+              <span className="text-base font-semibold text-accent">
                 {acc.prefix}
               </span>
               <input
@@ -92,17 +75,9 @@ export default async function ManageAccountsPage() {
           </div>
         ))}
 
-        <div
-          style={{
-            background: '#FFF8EE',
-            borderRadius: 12,
-            padding: '12px 14px',
-            display: 'flex',
-            gap: 8,
-          }}
-        >
+        <div className="bg-warning-bg rounded-xl px-[14px] py-3 flex gap-2">
           <span>⚠️</span>
-          <p style={{ fontSize: 12, color: '#B07A30', lineHeight: '1.5' }}>
+          <p className="text-xs text-warning-text leading-[1.5]">
             Manually editing balances will affect reverse-calculation accuracy.
           </p>
         </div>
