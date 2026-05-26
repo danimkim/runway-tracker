@@ -17,27 +17,25 @@ export default function OnboardingAccountPage() {
   }
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'white', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: 430, display: 'flex', flexDirection: 'column' }}>
+    <div className="min-h-dvh bg-white flex justify-center">
+      <div className="w-full max-w-107.5 flex flex-col">
         <div className="ob-progress">
           <div className="ob-step ob-step-active" />
           <div className="ob-step" />
         </div>
-        <div style={{ padding: '24px 24px 0' }}>
+        <div className="px-6 pt-6">
           <p className="ob-step-label">1 / 2</p>
           <h1 className="ob-heading">Set your accounts</h1>
           <p className="ob-desc">Enter your current balances.</p>
-          <p className="ob-desc" style={{ marginTop: 0 }}>
-            You can always update these in Settings.
-          </p>
+          <p className="ob-desc mt-0">You can always update these in Settings.</p>
         </div>
-        <form className="auth-form" style={{ marginTop: 32 }} onSubmit={handleSubmit}>
+        <form className="auth-form mt-8" onSubmit={handleSubmit}>
           <div className="account-card-input">
             <div className="account-card-input-flag">🇰🇷</div>
-            <div style={{ flex: 1 }}>
+            <div className="flex-1">
               <div className="account-card-input-label">Korean Won (KRW)</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ color: '#3B424E', fontWeight: 600, fontSize: 16 }}>₩</span>
+              <div className="flex items-center gap-1">
+                <span className="text-accent font-semibold text-base">₩</span>
                 <input
                   className="account-num-input"
                   type="number"
@@ -49,12 +47,12 @@ export default function OnboardingAccountPage() {
               </div>
             </div>
           </div>
-          <div className="account-card-input" style={{ marginTop: 12 }}>
+          <div className="account-card-input mt-3">
             <div className="account-card-input-flag">🇬🇧</div>
-            <div style={{ flex: 1 }}>
+            <div className="flex-1">
               <div className="account-card-input-label">British Pound (GBP)</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ color: '#3B424E', fontWeight: 600, fontSize: 16 }}>£</span>
+              <div className="flex items-center gap-1">
+                <span className="text-accent font-semibold text-base">£</span>
                 <input
                   className="account-num-input"
                   type="number"
@@ -67,7 +65,7 @@ export default function OnboardingAccountPage() {
               </div>
             </div>
           </div>
-          <button className="btn-primary" style={{ marginTop: 32 }} type="submit">
+          <button className="btn-primary mt-8" type="submit">
             Next
           </button>
         </form>

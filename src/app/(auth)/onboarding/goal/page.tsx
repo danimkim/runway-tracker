@@ -11,16 +11,26 @@ export default async function OnboardingGoalPage({
 
   return (
     <div className="min-h-dvh bg-white flex justify-center">
-      <div className="w-full max-w-[430px] flex flex-col relative">
+      <div className="w-full max-w-107.5 flex flex-col">
         <div className="ob-progress">
           <div className="ob-step ob-step-done" />
           <div className="ob-step ob-step-active" />
         </div>
-        <Link href="/onboarding/account" className="back-btn absolute top-12 left-5">
-          <img src="/arrow.svg" width={20} height={20} alt="back" />
-        </Link>
         <div className="px-6 pt-6">
-          <p className="ob-step-label">2 / 2</p>
+          <div className="flex items-center gap-2 mb-1">
+            <Link href="/onboarding/account" className="back-btn">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path
+                  d="M12 5L7 10L12 15"
+                  stroke="#3B424E"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Link>
+            <p className="ob-step-label">2 / 2</p>
+          </div>
           <h1 className="ob-heading">
             How long do you plan
             <br />
