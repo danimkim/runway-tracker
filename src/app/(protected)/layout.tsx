@@ -12,8 +12,8 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   if (!isOnboarded) redirect('/onboarding/account')
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#EEF0F8', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: 430, position: 'relative', background: '#EEF0F8', minHeight: '100dvh' }}>
+    <div className="min-h-dvh bg-surface flex justify-center">
+      <div className="w-full max-w-[430px] relative bg-surface min-h-dvh">
         {children}
         <BottomNav />
       </div>
