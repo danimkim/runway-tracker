@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { logout } from '@/app/(protected)/settings/actions';
+import { ChangePasswordModal } from '@/features/settings/components/ChangePasswordModal';
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -60,175 +61,56 @@ export default async function SettingsPage() {
   ];
 
   return (
-    <div className="screen has-bottom-nav" style={{ overflowY: 'auto' }}>
+    <div className="screen has-bottom-nav overflow-y-auto">
       {/* Header */}
-      <div
-        style={{
-          padding: '56px 20px 16px',
-          background: 'white',
-          borderBottom: '1px solid #EEF0F8',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#2A3140' }}>
-            Settings
-          </h1>
-          <button
-            style={{
-              background: '#EEF0F8',
-              border: 'none',
-              borderRadius: 8,
-              padding: '5px 10px',
-              fontSize: 12,
-              fontWeight: 700,
-              color: '#5A6478',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-            }}
-          >
+      <div className="pt-14 px-5 pb-4 bg-card border-b border-surface">
+        <div className="flex justify-between items-center">
+          <h1 className="text-[22px] font-bold text-primary">Settings</h1>
+          <button className="bg-surface border-none rounded-lg py-[5px] px-[10px] text-xs font-bold text-secondary cursor-pointer [font-family:inherit]">
             한국어
           </button>
         </div>
       </div>
 
       {/* Body */}
-      <div
-        style={{
-          padding: '16px 20px 120px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-        }}
-      >
+      <div className="px-5 pt-4 pb-[120px] flex flex-col gap-4">
         {/* Profile card */}
-        <div
-          style={{
-            background: 'white',
-            borderRadius: 20,
-            padding: 20,
-            boxShadow: '0 1px 4px rgba(59,66,78,0.06)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div
-              style={{
-                width: 50,
-                height: 50,
-                borderRadius: 18,
-                background: 'linear-gradient(135deg, #8991B2, #B0B9D3)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 20,
-                color: 'white',
-                fontWeight: 700,
-                flexShrink: 0,
-              }}
-            >
+        <div className="bg-card rounded-card p-5 shadow-card">
+          <div className="flex items-center gap-[14px]">
+            <div className="w-[50px] h-[50px] rounded-[18px] bg-gradient-to-br from-muted to-light flex items-center justify-center text-xl text-white font-bold shrink-0">
               {avatar}
             </div>
             <div>
-              <p style={{ fontSize: 15, fontWeight: 700, color: '#2A3140' }}>
+              <p className="text-[15px] font-bold text-primary">
                 {user?.email}
               </p>
-              <p style={{ fontSize: 12, color: '#8991B2', marginTop: 2 }}>
-                Solo Plan
-              </p>
+              <p className="text-xs text-muted mt-0.5">Solo Plan</p>
             </div>
           </div>
         </div>
 
         {/* ACCOUNTS section */}
         <div>
-          <p
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: '#8991B2',
-              marginBottom: 8,
-              paddingLeft: 4,
-              letterSpacing: '0.5px',
-              textTransform: 'uppercase',
-            }}
-          >
+          <p className="text-xs font-semibold text-muted mb-2 pl-1 tracking-[0.5px] uppercase">
             Accounts
           </p>
-          <div
-            style={{
-              background: 'white',
-              borderRadius: 16,
-              overflow: 'hidden',
-              boxShadow: '0 1px 4px rgba(59,66,78,0.06)',
-            }}
-          >
-            {menuItems.map((item, i) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                style={{ textDecoration: 'none' }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 14,
-                    padding: '15px 16px',
-                    borderBottom:
-                      i < menuItems.length - 1
-                        ? '1px solid #F5F6FA'
-                        : 'none',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 38,
-                      height: 38,
-                      borderRadius: 12,
-                      background: '#EEF0F8',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 18,
-                      flexShrink: 0,
-                    }}
-                  >
+          <div className="bg-card rounded-item overflow-hidden shadow-card divide-y divide-subtle">
+            {menuItems.map((item) => (
+              <Link key={item.href} href={item.href} className="no-underline block">
+                <div className="flex items-center gap-[14px] px-4 py-[15px]">
+                  <div className="w-[38px] h-[38px] rounded-btn bg-surface flex items-center justify-center text-lg shrink-0">
                     {item.icon}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <p
-                      style={{
-                        fontSize: 15,
-                        fontWeight: 600,
-                        color: '#2A3140',
-                      }}
-                    >
+                  <div className="flex-1">
+                    <p className="text-[15px] font-semibold text-primary">
                       {item.label}
                     </p>
-                    <p
-                      style={{
-                        fontSize: 12,
-                        color: '#8991B2',
-                        marginTop: 1,
-                      }}
-                    >
-                      {item.sub}
-                    </p>
+                    <p className="text-xs text-muted mt-px">{item.sub}</p>
                   </div>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                  >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <path
                       d="M6 4l4 4-4 4"
-                      stroke="#B0B9D3"
+                      stroke="var(--color-light)"
                       strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -240,69 +122,47 @@ export default async function SettingsPage() {
           </div>
         </div>
 
+        {/* Contact */}
+        <div className="bg-card rounded-item overflow-hidden shadow-card">
+          <div className="flex items-center gap-[14px] px-4 py-[15px]">
+            <div className="w-[38px] h-[38px] rounded-btn bg-surface flex items-center justify-center text-lg shrink-0">
+              💬
+            </div>
+            <div className="flex-1">
+              <p className="text-[15px] font-semibold text-primary">Contact</p>
+              <p className="text-xs text-muted mt-px">danimkim.dev@gmail.com</p>
+            </div>
+          </div>
+        </div>
+
+        {/* SECURITY section */}
+        <div>
+          <p className="text-xs font-semibold text-muted mb-2 pl-1 tracking-[0.5px] uppercase">Security</p>
+          <div className="bg-card rounded-item overflow-hidden shadow-card">
+            <ChangePasswordModal userEmail={user!.email!} />
+          </div>
+        </div>
+
         {/* Log Out */}
-        <div
-          style={{
-            background: 'white',
-            borderRadius: 16,
-            overflow: 'hidden',
-            boxShadow: '0 1px 4px rgba(59,66,78,0.06)',
-          }}
-        >
+        <div className="bg-card rounded-item overflow-hidden shadow-card">
           <form action={logout}>
             <button
               type="submit"
-              style={{
-                width: '100%',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-              }}
+              className="w-full bg-transparent border-none cursor-pointer [font-family:inherit]"
             >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 14,
-                  padding: '15px 16px',
-                }}
-              >
-                <div
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 12,
-                    background: '#FFF0EB',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 18,
-                    flexShrink: 0,
-                  }}
-                >
+              <div className="flex items-center gap-[14px] px-4 py-[15px]">
+                <div className="w-[38px] h-[38px] rounded-btn bg-warning-bg flex items-center justify-center text-lg shrink-0">
                   🚪
                 </div>
-                <div style={{ flex: 1, textAlign: 'left' }}>
-                  <p
-                    style={{
-                      fontSize: 15,
-                      fontWeight: 600,
-                      color: '#E8845C',
-                    }}
-                  >
+                <div className="flex-1 text-left">
+                  <p className="text-[15px] font-semibold text-warning">
                     Log Out
                   </p>
                 </div>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path
                     d="M6 4l4 4-4 4"
-                    stroke="#E8845C"
+                    stroke="var(--color-warning)"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"

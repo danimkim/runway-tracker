@@ -45,23 +45,13 @@ export function BottomNav() {
   const pathname = usePathname()
 
   return (
-    <div style={{
-      position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
-      width: '100%', maxWidth: 430,
-      background: 'white', borderTop: '1px solid #EEF0F8',
-      display: 'flex', paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-      boxShadow: '0 -4px 20px rgba(59,66,78,0.08)', zIndex: 100,
-    }}>
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-card border-t border-border flex pb-[env(safe-area-inset-bottom,0px)] shadow-nav z-100">
       {tabs.map(tab => {
         const active = pathname.startsWith(tab.href)
         return (
-          <Link key={tab.href} href={tab.href} style={{
-            flex: 1, padding: '10px 0 12px',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-            textDecoration: 'none',
-          }}>
+          <Link key={tab.href} href={tab.href} className="flex-1 pt-[10px] pb-3 flex flex-col items-center gap-[3px] no-underline">
             {tab.icon(active)}
-            <span style={{ fontSize: 10, fontWeight: active ? 700 : 500, color: active ? '#3B424E' : '#AAB5C5' }}>
+            <span className={`text-[10px] ${active ? 'font-bold text-accent' : 'font-medium text-faint'}`}>
               {tab.label}
             </span>
           </Link>

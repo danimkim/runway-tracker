@@ -19,6 +19,11 @@ export default function LoginPage() {
         <form className="auth-form" action={loginAction}>
           <AuthField name="email" label="Email" type="email" placeholder="hello@example.com" required />
           <AuthField name="password" label="Password" type="password" placeholder="••••••••" required />
+          <div className="flex justify-end mb-4">
+            <Link href="/forgot-password" className="text-[13px] text-muted font-semibold underline underline-offset-2">
+              Forgot password?
+            </Link>
+          </div>
           {state?.error && <p className="text-[13px] text-warning mt-1">{state.error}</p>}
           <button type="submit" className="btn-primary mt-2" disabled={isPending}>
             {isPending ? 'Signing in...' : 'Sign In'}

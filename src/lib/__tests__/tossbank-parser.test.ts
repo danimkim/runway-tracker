@@ -1,4 +1,4 @@
-import { parseTossBankText } from '../tossbank/parser';
+import { parseTossBankText, isValidTossBankDocument } from '../tossbank/parser';
 
 const TABLE_HEADER = `DateStatus
 Approval
@@ -34,6 +34,20 @@ KRW200000`;
 function wrap(transactions: string) {
   return `${DOC_HEADER}\n${transactions}\n1 / 1\n\n${FOOTER}`;
 }
+
+describe('isValidTossBankDocument', () => {
+  it('returns true for text containing the Toss Bank document identifier', () => {
+    expect(isValidTossBankDocument(DOC_HEADER)).toBe(true);
+  });
+
+  it('returns false for arbitrary text without the identifier', () => {
+    expect(isValidTossBankDocument('This is some other PDF content.')).toBe(false);
+  });
+
+  it('returns false for empty string', () => {
+    expect(isValidTossBankDocument('')).toBe(false);
+  });
+});
 
 describe('parseTossBankText', () => {
   it('parses a compact single-line transaction', () => {
