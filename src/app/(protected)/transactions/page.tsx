@@ -95,12 +95,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                       <p className="text-sm font-bold text-primary">{tx.displayAmount}</p>
                       {tx.linkable && (
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-1 stroke-light">
-                          <path
-                            d="M5 3l4 4-4 4"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
+                          <path d="M5 3l4 4-4 4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
                     </div>
@@ -131,6 +126,8 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
             <p className="text-sm">No transactions yet</p>
           </div>
         )}
+        {/* TODO: new transaction button */}
+        {<button>Add</button>}
       </div>
     </div>
   );
