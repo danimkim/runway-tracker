@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { logout } from '@/app/(protected)/settings/actions';
+import { logout } from '@/features/settings/actions/session';
 import { ChangePasswordModal } from '@/features/settings/components/ChangePasswordModal';
+import { getSettingsOverview } from '@/features/settings/data/settings';
+import { getDaysLeft } from '@/features/settings/utils/date';
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -9,16 +11,8 @@ export default async function SettingsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: accounts }, { data: settings }] = await Promise.all([
-    supabase.from('accounts').select('currency, balance').eq('user_id', user!.id),
-    supabase.from('user_settings').select('target_date').eq('user_id', user!.id).single(),
-  ]);
-
-  const krwBalance = accounts?.find((a) => a.currency === 'KRW')?.balance ?? 0;
-  const gbpBalance = accounts?.find((a) => a.currency === 'GBP')?.balance ?? 0;
-
-  const targetDate = settings?.target_date ?? null;
-  const daysLeft = targetDate ? Math.ceil((new Date(targetDate).getTime() - Date.now()) / 86_400_000) : null;
+  const { krwBalance, gbpBalance, targetDate } = await getSettingsOverview(user!.id, supabase);
+  const daysLeft = targetDate ? getDaysLeft(targetDate) : null;
 
   const krwFormatted = `₩${krwBalance.toLocaleString()}`;
   const gbpFormatted = `£${gbpBalance.toFixed(2)}`;

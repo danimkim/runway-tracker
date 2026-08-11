@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { SubPageHeader } from '@/components/layout/SubPageHeader';
-import { AccountForm } from './AccountForm';
+import { AccountForm } from '@/features/settings/components/AccountForm';
+import { getAccountBalances } from '@/features/settings/data/accounts';
 
 export default async function ManageAccountsPage() {
   const supabase = await createClient();
@@ -8,13 +9,7 @@ export default async function ManageAccountsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: accounts } = await supabase
-    .from('accounts')
-    .select('currency, balance')
-    .eq('user_id', user!.id);
-
-  const krwBalance = accounts?.find((a) => a.currency === 'KRW')?.balance ?? 0;
-  const gbpBalance = accounts?.find((a) => a.currency === 'GBP')?.balance ?? 0;
+  const { krwBalance, gbpBalance } = await getAccountBalances(user!.id, supabase);
 
   const accountFields = [
     {
