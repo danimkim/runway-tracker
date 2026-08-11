@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { CATEGORY_COLORS, CATEGORY_EMOJI, CategoryName, isCategoryName } from '@/lib/categories';
-import { getGBPTransactions, getKRWTransactions } from '@/services/transactions';
+import { getGBPTransactions, getKRWTransactions } from '@/features/transactions/data/transactions';
 import { groupByDate } from '@/features/transactions/utils/grouping';
 
 export default async function TransactionsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
