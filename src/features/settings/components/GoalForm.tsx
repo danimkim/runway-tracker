@@ -2,7 +2,8 @@
 
 import { useActionState, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { updateTargetDate } from './actions';
+import { updateTargetDate } from '@/features/settings/actions/goal';
+import { getDaysLeft } from '@/features/settings/utils/date';
 
 interface GoalFormProps {
   currentTarget: string | null;
@@ -14,7 +15,8 @@ export function GoalForm({ currentTarget, currentDaysLeft }: GoalFormProps) {
   const [date, setDate] = useState(currentTarget ?? '');
   const [state, formAction, isPending] = useActionState(updateTargetDate, null);
 
-  const daysLeft = date ? Math.ceil((new Date(date + 'T00:00:00').getTime() - Date.now()) / 86_400_000) : null;
+  const [referenceDate] = useState(() => new Date());
+  const daysLeft = date ? getDaysLeft(`${date}T00:00:00`, referenceDate) : null;
 
   useEffect(() => {
     if (state?.success) {

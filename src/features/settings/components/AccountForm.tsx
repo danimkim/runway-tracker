@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
-import { updateAccountBalances } from './actions';
+import { updateAccountBalances } from '@/features/settings/actions/account';
 
 interface AccountField {
   flag: string;
