@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { updateAccountBalances } from '@/features/settings/actions/account';
 
 interface AccountField {
@@ -19,8 +19,17 @@ interface AccountFormProps {
 
 export function AccountForm({ accountFields }: AccountFormProps) {
   const [state, formAction, isPending] = useActionState(updateAccountBalances, null);
+  const [hiddenSuccess, setHiddenSuccess] = useState<typeof state>(null);
+  const showSaved = state?.success === true && hiddenSuccess !== state;
 
-  const btnClass = state?.success ? 'btn-primary transition-colors duration-300 !bg-emerald-500' : 'btn-primary';
+  useEffect(() => {
+    if (!state?.success) return;
+
+    const timer = setTimeout(() => setHiddenSuccess(state), 1500);
+    return () => clearTimeout(timer);
+  }, [state]);
+
+  const btnClass = showSaved ? 'btn-primary transition-colors duration-300 !bg-emerald-500' : 'btn-primary';
 
   return (
     <form action={formAction} className="px-5 pt-5 pb-25 flex flex-col gap-4">
@@ -57,7 +66,7 @@ export function AccountForm({ accountFields }: AccountFormProps) {
       {state?.success === false && <p className="text-sm text-red-500 text-center">{state.error}</p>}
 
       <button type="submit" disabled={isPending} className={btnClass}>
-        {isPending ? 'Saving...' : state?.success ? 'Saved!' : 'Save'}
+        {isPending ? 'Saving...' : showSaved ? 'Saved!' : 'Save'}
       </button>
     </form>
   );
