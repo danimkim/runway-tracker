@@ -128,9 +128,10 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         )}
       </div>
 
+      {/* create new transaction */}
       <Link
-        href="/upload"
-        aria-label="Upload transactions"
+        href="/transactions/new"
+        aria-label="Create transaction"
         className="fixed right-[max(20px,calc((100vw-430px)/2+20px))] bottom-23 z-90 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-white shadow-[0_8px_24px_rgba(59,66,78,0.22)] transition-colors hover:bg-accent-hover"
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
