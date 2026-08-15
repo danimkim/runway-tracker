@@ -18,14 +18,15 @@ export function DonutChart({ segments, colors, size = 130 }: DonutChartProps) {
     <div style={{ width: size, height: size, borderRadius: '50%', background: '#EEF0F8' }}/>
   )
 
-  let cumAngle = -90
   return (
     <svg width={size} height={size} viewBox="0 0 130 130">
       {segments.map((seg, i) => {
+        const previousValue = segments
+          .slice(0, i)
+          .reduce((sum, previous) => sum + previous.value, 0)
         const pct = seg.value / total
         const dash = pct * C
-        const rotation = cumAngle
-        cumAngle += pct * 360
+        const rotation = -90 + (previousValue / total) * 360
         return (
           <circle key={i} cx={cx} cy={cy} r={R} fill="none"
             stroke={colors[seg.name] || '#ccc'} strokeWidth="20"
