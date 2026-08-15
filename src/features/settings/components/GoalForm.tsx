@@ -2,7 +2,8 @@
 
 import { useActionState, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { updateTargetDate } from './actions';
+import { updateTargetDate } from '@/features/settings/actions/goal';
+import { getDaysLeft } from '@/features/settings/utils/date';
 
 interface GoalFormProps {
   currentTarget: string | null;
@@ -13,17 +14,24 @@ export function GoalForm({ currentTarget, currentDaysLeft }: GoalFormProps) {
   const router = useRouter();
   const [date, setDate] = useState(currentTarget ?? '');
   const [state, formAction, isPending] = useActionState(updateTargetDate, null);
+  const [hiddenSuccess, setHiddenSuccess] = useState<typeof state>(null);
+  const showSaved = state?.success === true && hiddenSuccess !== state;
 
-  const daysLeft = date ? Math.ceil((new Date(date + 'T00:00:00').getTime() - Date.now()) / 86_400_000) : null;
+  const [referenceDate] = useState(() => new Date());
+  const daysLeft = date ? getDaysLeft(`${date}T00:00:00`, referenceDate) : null;
 
   useEffect(() => {
     if (state?.success) {
-      const timer = setTimeout(() => router.push('/settings'), 1200);
-      return () => clearTimeout(timer);
+      const savedTimer = setTimeout(() => setHiddenSuccess(state), 2000);
+      const redirectTimer = setTimeout(() => router.push('/settings'), 2200);
+      return () => {
+        clearTimeout(savedTimer);
+        clearTimeout(redirectTimer);
+      };
     }
   }, [state, router]);
 
-  const btnClass = state?.success ? 'btn-primary transition-colors duration-300 !bg-emerald-500' : 'btn-primary';
+  const btnClass = showSaved ? 'btn-primary transition-colors duration-300 !bg-emerald-500' : 'btn-primary';
 
   return (
     <form action={formAction} className="flex flex-col gap-[14px]">
@@ -59,7 +67,7 @@ export function GoalForm({ currentTarget, currentDaysLeft }: GoalFormProps) {
       {state?.success === false && <p className="text-sm text-red-500 text-center">{state.error}</p>}
 
       <button type="submit" disabled={isPending} className={btnClass}>
-        {isPending ? 'Saving...' : state?.success ? 'Saved!' : 'Save'}
+        {isPending ? 'Saving...' : showSaved ? 'Saved!' : 'Save'}
       </button>
     </form>
   );

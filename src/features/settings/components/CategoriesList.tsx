@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
-import { addCategory, updateCategoryName, deleteCategory } from './actions';
+import { addCategory, updateCategoryName, deleteCategory } from '@/features/settings/actions/categories';
 
 type Category = {
   id: string;

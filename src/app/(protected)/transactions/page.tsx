@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { CATEGORY_COLORS, CATEGORY_EMOJI, CategoryName, isCategoryName } from '@/lib/categories';
-import { getGBPTransactions, getKRWTransactions } from '@/services/transactions';
+import { getGBPTransactions, getKRWTransactions } from '@/features/transactions/data/transactions';
 import { groupByDate } from '@/features/transactions/utils/grouping';
 
 export default async function TransactionsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
@@ -95,12 +95,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                       <p className="text-sm font-bold text-primary">{tx.displayAmount}</p>
                       {tx.linkable && (
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-1 stroke-light">
-                          <path
-                            d="M5 3l4 4-4 4"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
+                          <path d="M5 3l4 4-4 4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
                     </div>
@@ -132,6 +127,17 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
           </div>
         )}
       </div>
+
+      {/* create new transaction */}
+      <Link
+        href="/transactions/new"
+        aria-label="Create transaction"
+        className="fixed right-[max(20px,calc((100vw-430px)/2+20px))] bottom-23 z-90 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-white shadow-[0_8px_24px_rgba(59,66,78,0.22)] transition-colors hover:bg-accent-hover"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+        </svg>
+      </Link>
     </div>
   );
 }

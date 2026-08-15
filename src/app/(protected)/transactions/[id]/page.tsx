@@ -4,7 +4,7 @@ import { SubPageHeader } from '@/components/layout/SubPageHeader';
 import { CATEGORY_NAMES, CATEGORY_COLORS, CATEGORY_EMOJI, CategoryName } from '@/lib/categories';
 import { updateTransactionCategory } from './actions';
 import { ReceiptUpload } from '@/features/transactions/components/ReceiptUpload';
-import { getTransactionById } from '@/services/transactions';
+import { getTransactionById } from '@/features/transactions/data/transactions';
 
 export default async function TransactionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

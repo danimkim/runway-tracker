@@ -36,7 +36,7 @@ export default function SignupPage() {
         <div className="auth-hero mt-5">
           <RunwayLogo size={48} />
           <h1 className="auth-title text-[24px]">Create Account</h1>
-          <p className="auth-sub">Let's get you set up</p>
+          <p className="auth-sub">{`Let's get you set up`}</p>
         </div>
         <form className="auth-form" action={signupAction}>
           <AuthField name="email" label="Email" type="email" placeholder="hello@example.com" required />

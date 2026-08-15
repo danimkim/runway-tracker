@@ -29,7 +29,7 @@ export default function LoginPage() {
             {isPending ? 'Signing in...' : 'Sign In'}
           </button>
           <p className="auth-switch">
-            Don't have an account?{' '}
+            {`Don't have an account?  `}
             <Link href="/signup" className="auth-link">
               Sign Up
             </Link>

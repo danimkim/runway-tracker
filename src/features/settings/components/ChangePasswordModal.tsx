@@ -1,20 +1,20 @@
-'use client'
+'use client';
 
-import { useActionState, useState } from 'react'
-import { verifyAndSendReset } from '@/app/(protected)/settings/actions'
+import { useActionState, useState } from 'react';
+import { verifyAndSendReset } from '@/features/settings/actions/session';
 
 interface Props {
-  userEmail: string
+  userEmail: string;
 }
 
 interface ModalContentProps {
-  userEmail: string
-  onClose: () => void
+  userEmail: string;
+  onClose: () => void;
 }
 
 function ModalContent({ userEmail, onClose }: ModalContentProps) {
-  const [state, formAction, isPending] = useActionState(verifyAndSendReset, null)
-  const isSuccess = state !== null && 'success' in state
+  const [state, formAction, isPending] = useActionState(verifyAndSendReset, null);
+  const isSuccess = state !== null && 'success' in state;
 
   return (
     <div
@@ -26,9 +26,7 @@ function ModalContent({ userEmail, onClose }: ModalContentProps) {
 
       {isSuccess ? (
         <div className="flex flex-col items-center gap-4 py-4">
-          <div className="w-12 h-12 rounded-full bg-success-bg flex items-center justify-center text-2xl">
-            ✉️
-          </div>
+          <div className="w-12 h-12 rounded-full bg-success-bg flex items-center justify-center text-2xl">✉️</div>
           <div className="text-center">
             <p className="text-[15px] font-bold text-primary">Reset email sent</p>
             <p className="text-[13px] text-muted mt-1">
@@ -43,8 +41,7 @@ function ModalContent({ userEmail, onClose }: ModalContentProps) {
         <form action={formAction} className="flex flex-col gap-0">
           <h2 className="text-[18px] font-bold text-primary mb-1">Change Password</h2>
           <p className="text-[13px] text-muted mb-5">
-            Verify your current password to receive a reset link at{' '}
-            <span className="font-semibold">{userEmail}</span>.
+            Verify your current password to receive a reset link at <span className="font-semibold">{userEmail}</span>.
           </p>
           <div className="field-group">
             <label className="field-label" htmlFor="currentPassword">
@@ -60,9 +57,7 @@ function ModalContent({ userEmail, onClose }: ModalContentProps) {
               autoComplete="current-password"
             />
           </div>
-          {state !== null && 'error' in state && (
-            <p className="text-[13px] text-warning mb-3">{state.error}</p>
-          )}
+          {state !== null && 'error' in state && <p className="text-[13px] text-warning mb-3">{state.error}</p>}
           <button type="submit" className="btn-primary" disabled={isPending}>
             {isPending ? 'Verifying...' : 'Verify & Send Reset Email'}
           </button>
@@ -72,11 +67,11 @@ function ModalContent({ userEmail, onClose }: ModalContentProps) {
         </form>
       )}
     </div>
-  )
+  );
 }
 
 export function ChangePasswordModal({ userEmail }: Props) {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
@@ -108,14 +103,11 @@ export function ChangePasswordModal({ userEmail }: Props) {
 
       {/* Modal overlay */}
       {isOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center"
-          onClick={() => setIsOpen(false)}
-        >
+        <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => setIsOpen(false)}>
           <div className="fixed inset-0 bg-black/40" />
           <ModalContent userEmail={userEmail} onClose={() => setIsOpen(false)} />
         </div>
       )}
     </>
-  )
+  );
 }

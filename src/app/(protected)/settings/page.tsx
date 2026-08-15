@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { logout } from '@/app/(protected)/settings/actions';
+import { logout } from '@/features/settings/actions/session';
 import { ChangePasswordModal } from '@/features/settings/components/ChangePasswordModal';
+import { getSettingsOverview } from '@/features/settings/data/settings';
+import { getDaysLeft } from '@/features/settings/utils/date';
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -9,27 +11,12 @@ export default async function SettingsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: accounts }, { data: settings }] = await Promise.all([
-    supabase.from('accounts').select('currency, balance').eq('user_id', user!.id),
-    supabase
-      .from('user_settings')
-      .select('target_date')
-      .eq('user_id', user!.id)
-      .single(),
-  ]);
-
-  const krwBalance = accounts?.find((a) => a.currency === 'KRW')?.balance ?? 0;
-  const gbpBalance = accounts?.find((a) => a.currency === 'GBP')?.balance ?? 0;
-
-  const targetDate = settings?.target_date ?? null;
-  const daysLeft = targetDate
-    ? Math.ceil((new Date(targetDate).getTime() - Date.now()) / 86_400_000)
-    : null;
+  const { krwBalance, gbpBalance, targetDate } = await getSettingsOverview(user!.id, supabase);
+  const daysLeft = targetDate ? getDaysLeft(targetDate) : null;
 
   const krwFormatted = `₩${krwBalance.toLocaleString()}`;
   const gbpFormatted = `£${gbpBalance.toFixed(2)}`;
-  const goalSub =
-    targetDate && daysLeft !== null ? `${targetDate} · D-${daysLeft}` : '—';
+  const goalSub = targetDate && daysLeft !== null ? `${targetDate} · D-${daysLeft}` : '—';
 
   const avatar = user?.email?.[0]?.toUpperCase() ?? '?';
 
@@ -81,9 +68,7 @@ export default async function SettingsPage() {
               {avatar}
             </div>
             <div>
-              <p className="text-[15px] font-bold text-primary">
-                {user?.email}
-              </p>
+              <p className="text-[15px] font-bold text-primary">{user?.email}</p>
               <p className="text-xs text-muted mt-0.5">Solo Plan</p>
             </div>
           </div>
@@ -91,9 +76,7 @@ export default async function SettingsPage() {
 
         {/* ACCOUNTS section */}
         <div>
-          <p className="text-xs font-semibold text-muted mb-2 pl-1 tracking-[0.5px] uppercase">
-            Accounts
-          </p>
+          <p className="text-xs font-semibold text-muted mb-2 pl-1 tracking-[0.5px] uppercase">Bank Accounts</p>
           <div className="bg-card rounded-item overflow-hidden shadow-card divide-y divide-subtle">
             {menuItems.map((item) => (
               <Link key={item.href} href={item.href} className="no-underline block">
@@ -102,9 +85,7 @@ export default async function SettingsPage() {
                     {item.icon}
                   </div>
                   <div className="flex-1">
-                    <p className="text-[15px] font-semibold text-primary">
-                      {item.label}
-                    </p>
+                    <p className="text-[15px] font-semibold text-primary">{item.label}</p>
                     <p className="text-xs text-muted mt-px">{item.sub}</p>
                   </div>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -119,6 +100,21 @@ export default async function SettingsPage() {
                 </div>
               </Link>
             ))}
+          </div>
+        </div>
+
+        {/* Transactions */}
+        <div>
+          <p className="text-xs font-semibold text-muted mb-2 pl-1 tracking-[0.5px] uppercase">Transactions</p>
+          <div className="bg-card rounded-item overflow-hidden shadow-card">
+            <div className="flex items-center gap-[14px] px-4 py-[15px]">
+              <div className="w-[38px] h-[38px] rounded-btn bg-surface flex items-center justify-center text-lg shrink-0">
+                🔄
+              </div>
+              <div className="flex-1">
+                <p className="text-[15px] font-semibold text-primary">Reset</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -146,18 +142,13 @@ export default async function SettingsPage() {
         {/* Log Out */}
         <div className="bg-card rounded-item overflow-hidden shadow-card">
           <form action={logout}>
-            <button
-              type="submit"
-              className="w-full bg-transparent border-none cursor-pointer [font-family:inherit]"
-            >
+            <button type="submit" className="w-full bg-transparent border-none cursor-pointer [font-family:inherit]">
               <div className="flex items-center gap-[14px] px-4 py-[15px]">
                 <div className="w-[38px] h-[38px] rounded-btn bg-warning-bg flex items-center justify-center text-lg shrink-0">
                   🚪
                 </div>
                 <div className="flex-1 text-left">
-                  <p className="text-[15px] font-semibold text-warning">
-                    Log Out
-                  </p>
+                  <p className="text-[15px] font-semibold text-warning">Log Out</p>
                 </div>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path
