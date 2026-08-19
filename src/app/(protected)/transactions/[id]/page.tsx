@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect, notFound } from 'next/navigation';
 import { SubPageHeader } from '@/components/layout/SubPageHeader';
 import { CATEGORY_NAMES, CATEGORY_COLORS, CATEGORY_EMOJI, CategoryName } from '@/lib/categories';
-import { updateTransactionCategory } from './actions';
+import { updateTransactionCategory } from '@/features/transactions/actions/update-category';
 import { ReceiptUpload } from '@/features/transactions/components/ReceiptUpload';
 import { getTransactionById } from '@/features/transactions/data/transactions';
 import { TransactionDateTime } from './TransactionDateTime';

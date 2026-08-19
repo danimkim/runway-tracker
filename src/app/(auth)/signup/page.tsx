@@ -3,7 +3,7 @@
 import { useActionState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signup } from './actions';
+import { signup } from '@/features/auth/actions/signup';
 import { RunwayLogo } from '@/features/auth/components/RunwayLogo';
 import { AuthField } from '@/features/auth/components/AuthField';
 

@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react';
 import Link from 'next/link';
-import { login } from './actions';
+import { login } from '@/features/auth/actions/login';
 import { RunwayLogo } from '@/features/auth/components/RunwayLogo';
 import { AuthField } from '@/features/auth/components/AuthField';
 
