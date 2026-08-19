@@ -5,6 +5,7 @@ import { CATEGORY_NAMES, CATEGORY_COLORS, CATEGORY_EMOJI, CategoryName } from '@
 import { updateTransactionCategory } from './actions';
 import { ReceiptUpload } from '@/features/transactions/components/ReceiptUpload';
 import { getTransactionById } from '@/features/transactions/data/transactions';
+import { DeleteTransactionButton } from '@/features/transactions/components/DeleteTransactionButton';
 
 export default async function TransactionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -41,31 +42,32 @@ export default async function TransactionDetailPage({ params }: { params: Promis
         </p>
       </div>
 
-      <form action={updateTransactionCategory} className="flex flex-col pt-5 px-5 pb-[100px] gap-4">
-        <input type="hidden" name="id" value={tx.id} />
+      <div className="flex flex-col pt-5 px-5 pb-[100px] gap-4">
+        <form action={updateTransactionCategory} className="flex flex-col gap-4">
+          <input type="hidden" name="id" value={tx.id} />
 
-        {/* Category */}
-        <div className="bg-white rounded-item p-4 shadow-(--shadow-card)">
-          <p className="text-[13px] font-semibold text-secondary mb-3">Category</p>
-          <div className="flex flex-wrap gap-2">
-            {CATEGORY_NAMES.map((c) => (
-              <label
-                key={c}
-                className="py-2 px-[14px] rounded-[10px] text-[13px] font-semibold cursor-pointer"
-                style={{
-                  background: tx.category === c ? 'var(--color-accent)' : 'var(--color-surface)',
-                  color: tx.category === c ? 'white' : 'var(--color-secondary)',
-                }}
-              >
-                <input type="radio" name="category" value={c} defaultChecked={tx.category === c} className="hidden" />
-                {CATEGORY_EMOJI[c]} {c}
-              </label>
-            ))}
+          {/* Category */}
+          <div className="bg-white rounded-item p-4 shadow-(--shadow-card)">
+            <p className="text-[13px] font-semibold text-secondary mb-3">Category</p>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORY_NAMES.map((c) => (
+                <label
+                  key={c}
+                  className="py-2 px-[14px] rounded-[10px] text-[13px] font-semibold cursor-pointer"
+                  style={{
+                    background: tx.category === c ? 'var(--color-accent)' : 'var(--color-surface)',
+                    color: tx.category === c ? 'white' : 'var(--color-secondary)',
+                  }}
+                >
+                  <input type="radio" name="category" value={c} defaultChecked={tx.category === c} className="hidden" />
+                  {CATEGORY_EMOJI[c]} {c}
+                </label>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Memo */}
-        {/* <div className="bg-white rounded-item p-4 shadow-(--shadow-card)">
+          {/* Memo */}
+          {/* <div className="bg-white rounded-item p-4 shadow-(--shadow-card)">
           <p className="text-[13px] font-semibold text-secondary mb-2.5">Memo</p>
           <textarea
             className="field-input resize-none h-20 leading-normal"
@@ -74,10 +76,13 @@ export default async function TransactionDetailPage({ params }: { params: Promis
             defaultValue={tx.receipt_url ?? ''}
           />
         </div> */}
-        <ReceiptUpload transactionId={tx.id} userId={user.id} currentReceiptUrl={tx.receipt_url} />
+          <ReceiptUpload transactionId={tx.id} userId={user.id} currentReceiptUrl={tx.receipt_url} />
 
-        <button className="btn-primary">Save</button>
-      </form>
+          <button className="btn-primary">Save</button>
+        </form>
+
+        <DeleteTransactionButton transactionId={tx.id} />
+      </div>
     </div>
   );
 }
