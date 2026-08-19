@@ -29,7 +29,7 @@ export async function createTransaction(
 
   if (!merchantName) return { success: false, error: 'Merchant name is required.' };
   if (!Number.isFinite(amount) || amount <= 0) return { success: false, error: 'Enter a valid amount.' };
-  if (!transactedAt) return { success: false, error: 'Transaction date is required.' };
+  if (!transactedAt) return { success: false, error: 'Transaction date and time are required.' };
   if (category && !CATEGORY_NAMES.includes(category as (typeof CATEGORY_NAMES)[number])) {
     return { success: false, error: 'Choose a valid category.' };
   }

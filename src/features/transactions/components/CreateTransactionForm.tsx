@@ -8,8 +8,14 @@ interface CreateTransactionFormProps {
   defaultDate: string;
 }
 
+function toDateTimeLocalValue(date: string) {
+  if (date.includes('T')) return date.slice(0, 16);
+  return `${date}T12:00`;
+}
+
 export function CreateTransactionForm({ defaultDate }: CreateTransactionFormProps) {
   const [state, formAction, isPending] = useActionState(createTransaction, null);
+  const defaultDateTime = toDateTimeLocalValue(defaultDate);
 
   return (
     <form action={formAction} className="flex flex-col gap-4 p-5 pb-24">
@@ -48,14 +54,14 @@ export function CreateTransactionForm({ defaultDate }: CreateTransactionFormProp
 
       <div className="bg-card rounded-item p-4 shadow-card">
         <label className="field-label" htmlFor="transactedAt">
-          Date
+          Date and time
         </label>
         <input
           id="transactedAt"
           name="transactedAt"
           className="field-input"
-          type="date"
-          defaultValue={defaultDate}
+          type="datetime-local"
+          defaultValue={defaultDateTime}
           required
         />
       </div>
