@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { CATEGORY_NAMES } from '@/lib/categories';
+import { getReceiptFile, uploadReceiptImage } from '@/features/transactions/utils/receipt-upload';
 
 type ActionResult = { success: false; error: string } | null;
 
@@ -26,12 +27,21 @@ export async function createTransaction(
   const amount = parseAmount(formData.get('amount'));
   const transactedAt = formData.get('transactedAt') as string | null;
   const category = formData.get('category') as string | null;
+  const receipt = getReceiptFile(formData.get('receipt'));
 
   if (!merchantName) return { success: false, error: 'Merchant name is required.' };
   if (!Number.isFinite(amount) || amount <= 0) return { success: false, error: 'Enter a valid amount.' };
   if (!transactedAt) return { success: false, error: 'Transaction date and time are required.' };
   if (category && !CATEGORY_NAMES.includes(category as (typeof CATEGORY_NAMES)[number])) {
     return { success: false, error: 'Choose a valid category.' };
+  }
+
+  let receiptPath: string | null = null;
+  if (receipt) {
+    const upload = await uploadReceiptImage(supabase, { file: receipt, userId: user.id });
+
+    if (upload.error) return { success: false, error: upload.error };
+    receiptPath = upload.path;
   }
 
   const { error } = await supabase.from('transactions').insert({
@@ -49,10 +59,16 @@ export async function createTransaction(
     account_type: 'GBP',
     is_estimated_rate: false,
     category: category || null,
+    receipt_url: receiptPath,
     transacted_at: transactedAt,
   });
 
-  if (error) return { success: false, error: 'Failed to create transaction.' };
+  if (error) {
+    if (receiptPath) {
+      await supabase.storage.from('receipts').remove([receiptPath]);
+    }
+    return { success: false, error: 'Failed to create transaction.' };
+  }
 
   revalidatePath('/transactions');
   redirect('/transactions?tab=GBP');

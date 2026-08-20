@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 import { CATEGORY_EMOJI, CATEGORY_NAMES } from '@/lib/categories';
 import { createTransaction } from '@/features/transactions/actions/create-transaction';
+import { RECEIPT_ACCEPT } from '@/features/transactions/utils/receipt-upload';
 
 interface CreateTransactionFormProps {
   defaultDate: string;
@@ -78,6 +79,20 @@ export function CreateTransactionForm({ defaultDate }: CreateTransactionFormProp
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="bg-card rounded-item p-4 shadow-card">
+        <label className="field-label" htmlFor="receipt">
+          Receipt image
+        </label>
+        <input
+          id="receipt"
+          name="receipt"
+          className="field-input file:mr-3 file:rounded-lg file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-[13px] file:font-semibold file:text-secondary"
+          type="file"
+          accept={RECEIPT_ACCEPT}
+        />
+        <p className="mt-2 text-[12px] text-muted">JPEG, PNG, WebP, or HEIC up to 10MB.</p>
       </div>
 
       {state?.success === false && <p className="text-sm text-red-500 text-center">{state.error}</p>}
