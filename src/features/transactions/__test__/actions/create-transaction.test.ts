@@ -39,14 +39,22 @@ function createFormData(overrides: Record<string, string | File> = {}) {
 
 function mockSupabase({
   user = { id: 'user-123' },
+  transaction = { id: 'transaction-row-id' },
   insertError = null,
   uploadError = null,
+  updateError = null,
 }: {
   user?: { id: string } | null;
+  transaction?: { id: string } | null;
   insertError?: unknown;
   uploadError?: unknown;
+  updateError?: unknown;
 } = {}) {
-  const insert = vi.fn().mockResolvedValue({ error: insertError });
+  const single = vi.fn().mockResolvedValue({ data: transaction, error: insertError });
+  const select = vi.fn(() => ({ single }));
+  const insert = vi.fn(() => ({ select }));
+  const eq = vi.fn().mockResolvedValue({ error: updateError });
+  const update = vi.fn(() => ({ eq }));
   const upload = vi.fn().mockResolvedValue({ error: uploadError });
   const remove = vi.fn().mockResolvedValue({ error: null });
 
@@ -54,7 +62,7 @@ function mockSupabase({
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user } }),
     },
-    from: vi.fn(() => ({ insert })),
+    from: vi.fn(() => ({ insert, update })),
     storage: {
       from: vi.fn(() => ({ upload, remove })),
     },
@@ -62,7 +70,7 @@ function mockSupabase({
 
   createClientMock.mockResolvedValue(supabase as never);
 
-  return { supabase, insert, upload, remove };
+  return { supabase, insert, select, single, update, eq, upload, remove };
 }
 
 describe('createTransaction', () => {
@@ -81,7 +89,7 @@ describe('createTransaction', () => {
   });
 
   it('inserts a manual GBP transaction and redirects to the GBP tab', async () => {
-    const { insert } = mockSupabase();
+    const { insert, select, single } = mockSupabase();
 
     await expect(createTransaction(null, createFormData())).rejects.toThrow('NEXT_REDIRECT:/transactions?tab=GBP');
 
@@ -103,31 +111,45 @@ describe('createTransaction', () => {
       receipt_url: null,
       transacted_at: '2026-08-19T09:30',
     });
+    expect(select).toHaveBeenCalledWith('id');
+    expect(single).toHaveBeenCalled();
     expect(revalidatePathMock).toHaveBeenCalledWith('/transactions');
     expect(redirectMock).toHaveBeenCalledWith('/transactions?tab=GBP');
   });
 
-  it('uploads an optional receipt image and stores its path with the transaction', async () => {
-    const { insert, upload } = mockSupabase();
+  it('creates the transaction before uploading an optional receipt image', async () => {
+    const { insert, update, eq, upload } = mockSupabase();
     const receipt = new File(['receipt'], 'receipt.png', { type: 'image/png' });
     const formData = createFormData({ receipt });
 
     await expect(createTransaction(null, formData)).rejects.toThrow('NEXT_REDIRECT:/transactions?tab=GBP');
 
-    expect(upload).toHaveBeenCalledWith('user-123/transaction-uuid.png', receipt, { upsert: undefined });
-    expect(insert).toHaveBeenCalledWith(expect.objectContaining({
-      receipt_url: 'user-123/transaction-uuid.png',
-    }));
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ receipt_url: null }));
+    expect(upload).toHaveBeenCalledWith('user-123/transaction-row-id.png', receipt, { upsert: undefined });
+    expect(update).toHaveBeenCalledWith({ receipt_url: 'user-123/transaction-row-id.png' });
+    expect(eq).toHaveBeenCalledWith('id', 'transaction-row-id');
   });
 
-  it('removes an uploaded receipt when inserting the transaction fails', async () => {
-    const { remove } = mockSupabase({ insertError: new Error('insert failed') });
+  it('does not upload a receipt when inserting the transaction fails', async () => {
+    const { upload, remove } = mockSupabase({ insertError: new Error('insert failed') });
     const receipt = new File(['receipt'], 'receipt.png', { type: 'image/png' });
     const formData = createFormData({ receipt });
 
     const result = await createTransaction(null, formData);
 
-    expect(remove).toHaveBeenCalledWith(['user-123/transaction-uuid.png']);
+    expect(upload).not.toHaveBeenCalled();
+    expect(remove).not.toHaveBeenCalled();
     expect(result).toEqual({ success: false, error: 'Failed to create transaction.' });
+  });
+
+  it('removes an uploaded receipt when attaching it to the transaction fails', async () => {
+    const { remove } = mockSupabase({ updateError: new Error('update failed') });
+    const receipt = new File(['receipt'], 'receipt.png', { type: 'image/png' });
+    const formData = createFormData({ receipt });
+
+    const result = await createTransaction(null, formData);
+
+    expect(remove).toHaveBeenCalledWith(['user-123/transaction-row-id.png']);
+    expect(result).toEqual({ success: false, error: 'Transaction created, but failed to attach receipt image.' });
   });
 });
