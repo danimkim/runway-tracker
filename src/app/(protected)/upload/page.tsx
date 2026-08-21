@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { SubPageHeader } from '@/components/layout/SubPageHeader';
-import { StatementUpload } from '@/components/upload/StatementUpload';
+import { StatementUpload } from '@/features/transactions/components/StatementUpload';
 
 export default function UploadPage() {
   const router = useRouter();

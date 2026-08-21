@@ -2,9 +2,10 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect, notFound } from 'next/navigation';
 import { SubPageHeader } from '@/components/layout/SubPageHeader';
 import { CATEGORY_NAMES, CATEGORY_COLORS, CATEGORY_EMOJI, CategoryName } from '@/lib/categories';
-import { updateTransactionCategory } from './actions';
+import { updateTransactionCategory } from '@/features/transactions/actions/update-category';
 import { ReceiptUpload } from '@/features/transactions/components/ReceiptUpload';
 import { getTransactionById } from '@/features/transactions/data/transactions';
+import { TransactionDateTime } from './TransactionDateTime';
 
 export default async function TransactionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -35,9 +36,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
         <p className="text-[28px] font-extrabold text-primary tracking-[-0.5px]">-£{tx.amount?.toFixed(2)}</p>
         <p className="text-[15px] text-secondary font-medium mt-1">{tx.merchant_name}</p>
         <p className="text-[13px] text-faint mt-0.5">
-          {tx.transacted_at
-            ? new Date(tx.transacted_at).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })
-            : ''}
+          <TransactionDateTime value={tx.transacted_at} />
         </p>
       </div>
 
