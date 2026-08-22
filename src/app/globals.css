@@ -187,6 +187,28 @@ body {
   background: var(--color-faint);
   cursor: not-allowed;
 }
+.btn-warning {
+  width: 100%;
+  padding: 15px;
+  background: var(--color-warning);
+  color: var(--color-warning-bg);
+  border: solid 2px var(--color-warning);
+  border-radius: var(--radius-btn);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-warning:hover {
+  background: var(--color-warning-text);
+  border-color: var(--color-warning-text);
+}
+.btn-warning:disabled {
+  background: var(--color-faint);
+  border-color: var(--color-faint);
+  cursor: not-allowed;
+}
 
 /* Quick action buttons */
 .quick-action-btn {
