@@ -58,6 +58,45 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
           </Link>
         </div>
 
+        {tab === 'GBP' && (
+          <form
+            action="/api/transactions/export"
+            method="get"
+            className="bg-white rounded-item p-4 shadow-(--shadow-card)"
+          >
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div>
+                <p className="text-[13px] font-semibold text-primary">Export</p>
+                <p className="text-[12px] text-muted">CSV with receipt images</p>
+              </div>
+              <button
+                type="submit"
+                className="shrink-0 bg-primary text-white font-semibold text-[13px] rounded-[10px] py-2 px-[14px]"
+              >
+                Download
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] font-semibold text-muted">From</span>
+                <input
+                  type="date"
+                  name="from"
+                  className="min-w-0 rounded-[10px] border border-border bg-white px-3 py-2 text-[13px] text-primary"
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] font-semibold text-muted">To</span>
+                <input
+                  type="date"
+                  name="to"
+                  className="min-w-0 rounded-[10px] border border-border bg-white px-3 py-2 text-[13px] text-primary"
+                />
+              </label>
+            </div>
+          </form>
+        )}
+
         {/* Grouped transactions */}
         {grouped.map(([date, dayTxs]) => (
           <div key={date}>
