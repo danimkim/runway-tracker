@@ -4,7 +4,7 @@ import { useActionState } from 'react'
 import Link from 'next/link'
 import { RunwayLogo } from '@/features/auth/components/RunwayLogo'
 import { AuthField } from '@/features/auth/components/AuthField'
-import { requestPasswordReset } from './actions'
+import { requestPasswordReset } from '@/features/auth/actions/password-reset'
 
 export default function ForgotPasswordPage() {
   const [state, formAction, isPending] = useActionState(requestPasswordReset, null)

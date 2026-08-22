@@ -1,4 +1,4 @@
-import { parseTossBankText, isValidTossBankDocument } from '../tossbank/parser';
+import { parseTossBankText, isValidTossBankDocument } from '@/lib/tossbank/parser';
 
 const TABLE_HEADER = `DateStatus
 Approval

@@ -1,4 +1,4 @@
-import { calcRunway } from '../runway';
+import { calcRunway } from '@/lib/runway';
 
 describe('calcRunway', () => {
   it('returns daily budget in KRW', () => {

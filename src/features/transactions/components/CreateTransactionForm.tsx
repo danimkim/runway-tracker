@@ -3,13 +3,20 @@
 import { useActionState } from 'react';
 import { CATEGORY_EMOJI, CATEGORY_NAMES } from '@/lib/categories';
 import { createTransaction } from '@/features/transactions/actions/create-transaction';
+import { RECEIPT_ACCEPT } from '@/features/transactions/utils/receipt-upload';
 
 interface CreateTransactionFormProps {
   defaultDate: string;
 }
 
+function toDateTimeLocalValue(date: string) {
+  if (date.includes('T')) return date.slice(0, 16);
+  return `${date}T12:00`;
+}
+
 export function CreateTransactionForm({ defaultDate }: CreateTransactionFormProps) {
   const [state, formAction, isPending] = useActionState(createTransaction, null);
+  const defaultDateTime = toDateTimeLocalValue(defaultDate);
 
   return (
     <form action={formAction} className="flex flex-col gap-4 p-5 pb-24">
@@ -48,14 +55,14 @@ export function CreateTransactionForm({ defaultDate }: CreateTransactionFormProp
 
       <div className="bg-card rounded-item p-4 shadow-card">
         <label className="field-label" htmlFor="transactedAt">
-          Date
+          Date and time
         </label>
         <input
           id="transactedAt"
           name="transactedAt"
           className="field-input"
-          type="date"
-          defaultValue={defaultDate}
+          type="datetime-local"
+          defaultValue={defaultDateTime}
           required
         />
       </div>
@@ -72,6 +79,20 @@ export function CreateTransactionForm({ defaultDate }: CreateTransactionFormProp
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="bg-card rounded-item p-4 shadow-card">
+        <label className="field-label" htmlFor="receipt">
+          Receipt image
+        </label>
+        <input
+          id="receipt"
+          name="receipt"
+          className="field-input file:mr-3 file:rounded-lg file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-[13px] file:font-semibold file:text-secondary"
+          type="file"
+          accept={RECEIPT_ACCEPT}
+        />
+        <p className="mt-2 text-[12px] text-muted">JPEG, PNG, WebP, or HEIC up to 10MB.</p>
       </div>
 
       {state?.success === false && <p className="text-sm text-red-500 text-center">{state.error}</p>}

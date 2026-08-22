@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { DeleteTransactionButton } from '@/features/transactions/components/DeleteTransactionButton'
 
-vi.mock('@/app/(protected)/transactions/[id]/actions', () => ({
+vi.mock('@/features/transactions/actions/delete-transaction', () => ({
   deleteTransaction: vi.fn(),
 }))
 

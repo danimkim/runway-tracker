@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { deleteTransaction } from '@/app/(protected)/transactions/[id]/actions'
+import { deleteTransaction } from '@/features/transactions/actions/delete-transaction'
 import { createClient } from '@/lib/supabase/server'
 
 vi.mock('next/navigation', () => ({

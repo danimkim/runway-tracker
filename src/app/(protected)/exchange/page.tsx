@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { SubPageHeader } from '@/components/layout/SubPageHeader';
-import { saveExchangeRecord } from './actions';
+import { saveExchangeRecord } from '@/features/transactions/actions/exchange-record';
 
 export default function ExchangePage() {
   const [krwOut, setKrwOut] = useState('');

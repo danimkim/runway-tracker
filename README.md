@@ -50,21 +50,36 @@ As an individual developer, accessing official banking APIs in South Korea is of
 
 ```
 src/
-├── app/               # Routing only — pages, layouts, route handlers
-│   ├── (auth)/        # Login, onboarding
-│   ├── (dashboard)/   # Protected pages
-│   └── auth/callback/ # Supabase OAuth callback
-├── components/
-│   ├── ui/            # shadcn/ui primitives
-│   └── layout/        # BottomNav, SubPageHeader, etc.
-├── features/          # Domain modules
+├── app/                  # Routing only: pages, layouts, and route handlers
+│   ├── (auth)/           # Login, signup, password reset, onboarding routes
+│   ├── (protected)/      # Authenticated app routes
+│   ├── api/              # Upload API endpoints
+│   └── auth/callback/    # Supabase auth callback
+├── components/           # Shared UI used across multiple features
+│   ├── charts/
+│   ├── icons/
+│   └── layout/
+├── features/             # Domain modules: actions, data, components, utils
 │   ├── auth/
+│   ├── onboarding/
 │   ├── dashboard/
+│   ├── settings/
 │   └── transactions/
-├── lib/
-│   ├── supabase/      # client, server, middleware, types
-│   ├── balance.ts     # GBP/KRW reverse-calculation
+├── lib/                  # Shared infrastructure and pure domain logic
+│   ├── supabase/         # client, server, middleware, generated types
+│   ├── tossbank/         # Toss Bank PDF parser
+│   ├── __test__/         # Tests for shared lib modules
+│   ├── balance.ts        # GBP/KRW reverse-calculation
 │   ├── exchange-rate.ts
 │   └── runway.ts
 └── proxy.ts
+
+supabase/
+├── migrations/           # Database migrations
+└── functions/            # Supabase Edge Functions
+
+tests/
+└── e2e/                  # Playwright tests for full app flows
 ```
+
+Vitest unit tests live next to the module they cover, under each feature or shared module's `__test__/` folder.

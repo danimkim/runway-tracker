@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { deleteTransaction } from '@/app/(protected)/transactions/[id]/actions';
+import { deleteTransaction } from '@/features/transactions/actions/delete-transaction';
 
 interface DeleteTransactionButtonProps {
   transactionId: string;

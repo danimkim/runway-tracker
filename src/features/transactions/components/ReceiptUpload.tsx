@@ -1,7 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import {
+  RECEIPT_ACCEPT,
+  uploadReceiptImage,
+  validateReceiptImage,
+} from '@/features/transactions/utils/receipt-upload';
 
 interface ReceiptUploadProps {
   transactionId: string;
@@ -17,9 +22,7 @@ export function ReceiptUpload({ transactionId, userId, currentReceiptUrl }: Rece
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const MAX_SIZE = 5 * 1024 * 1024;
-  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     if (!receiptPath) {
@@ -32,32 +35,29 @@ export function ReceiptUpload({ transactionId, userId, currentReceiptUrl }: Rece
       .then(({ data }) => {
         if (data) setSignedUrl(data.signedUrl);
       });
-  }, [receiptPath]);
+  }, [receiptPath, supabase]);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      setUploadError('Only JPEG, PNG, WebP, and HEIC files are allowed.');
+
+    const validationError = validateReceiptImage(file);
+    if (validationError) {
+      setUploadError(validationError);
       e.target.value = '';
       return;
     }
-    if (file.size > MAX_SIZE) {
-      setUploadError('File size must be 5MB or less.');
-      e.target.value = '';
-      return;
-    }
+
     setUploadError(null);
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop();
-      const path = `${userId}/${transactionId}.${ext}`;
-      const { error } = await supabase.storage.from('receipts').upload(path, file, { upsert: true });
-      if (error) throw error;
+      const { path, error } = await uploadReceiptImage(supabase, { file, userId, id: transactionId, upsert: true });
+      if (error) throw new Error(error);
       await supabase.from('transactions').update({ receipt_url: path }).eq('id', transactionId);
       setReceiptPath(path);
     } catch (err) {
       console.error('Upload failed:', err);
+      setUploadError('Failed to upload receipt image.');
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -98,7 +98,7 @@ export function ReceiptUpload({ transactionId, userId, currentReceiptUrl }: Rece
         </div>
       )}
 
-      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+      <input ref={fileInputRef} type="file" accept={RECEIPT_ACCEPT} className="hidden" onChange={handleFileChange} />
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
