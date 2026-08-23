@@ -106,7 +106,27 @@ export default async function SettingsPage() {
         {/* Transactions */}
         <div>
           <p className="text-xs font-semibold text-muted mb-2 pl-1 tracking-[0.5px] uppercase">Transactions</p>
-          <div className="bg-card rounded-item overflow-hidden shadow-card">
+          <div className="bg-card rounded-item overflow-hidden shadow-card divide-y divide-subtle">
+            <Link href="/settings/transactions/export" className="no-underline block">
+              <div className="flex items-center gap-[14px] px-4 py-[15px]">
+                <div className="w-[38px] h-[38px] rounded-btn bg-surface flex items-center justify-center text-lg shrink-0">
+                  📤
+                </div>
+                <div className="flex-1">
+                  <p className="text-[15px] font-semibold text-primary">Export Transaction History</p>
+                  <p className="text-xs text-muted mt-px">CSV with receipt images</p>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M6 4l4 4-4 4"
+                    stroke="var(--color-light)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+            </Link>
             <div className="flex items-center gap-[14px] px-4 py-[15px]">
               <div className="w-[38px] h-[38px] rounded-btn bg-surface flex items-center justify-center text-lg shrink-0">
                 🔄
