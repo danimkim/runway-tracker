@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { resendConfirmation } from '../../../app/(auth)/signup/confirm/actions';
+import { resendConfirmation } from '@/features/auth/actions/signup';
 import { RunwayLogo } from '@/features/auth/components/RunwayLogo';
 
 export function ConfirmContent({ email }: { email: string }) {

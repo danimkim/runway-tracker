@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { saveOnboardingData } from '../actions';
+import { saveOnboardingData } from '@/features/onboarding/actions/save-onboarding-data';
 import DateField from '@/features/onboarding/components/DateField';
 
 export default async function OnboardingGoalPage({

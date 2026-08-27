@@ -1,4 +1,4 @@
-import { calcActualGBPBalance, calcActualKRWBalance } from '../balance'
+import { calcActualGBPBalance, calcActualKRWBalance } from '@/lib/balance'
 
 describe('calcActualGBPBalance', () => {
   it('returns initial balance when there are no exchanges or transactions', () => {

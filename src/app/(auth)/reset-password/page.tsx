@@ -3,7 +3,7 @@
 import { useActionState } from 'react'
 import { RunwayLogo } from '@/features/auth/components/RunwayLogo'
 import { AuthField } from '@/features/auth/components/AuthField'
-import { resetPassword } from './actions'
+import { resetPassword } from '@/features/auth/actions/password-reset'
 
 export default function ResetPasswordPage() {
   const [state, formAction, isPending] = useActionState(resetPassword, null)

@@ -1,7 +1,7 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
 
 export async function saveOnboardingData(formData: FormData) {
   const supabase = await createClient();
@@ -10,8 +10,8 @@ export async function saveOnboardingData(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const krwBalance = parseFloat(formData.get('krwBalance') as string) || 0;
-  const gbpBalance = parseFloat(formData.get('gbpBalance') as string) || 0;
+  const krwBalance = Number.parseFloat(formData.get('krwBalance') as string) || 0;
+  const gbpBalance = Number.parseFloat(formData.get('gbpBalance') as string) || 0;
   const targetDate = formData.get('targetDate') as string;
 
   await supabase.from('accounts').upsert(
