@@ -36,8 +36,8 @@ Deno.serve(async () => {
 
   for (const tokenRow of tokens) {
     try {
-      let { access_token, refresh_token, expires_at, user_id, account_id } =
-        tokenRow;
+      let { access_token, refresh_token } = tokenRow;
+      const { expires_at, user_id, account_id } = tokenRow;
 
       // refresh if expiring within 10 minutes
       const expiresAtDate = new Date(expires_at);

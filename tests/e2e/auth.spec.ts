@@ -6,10 +6,11 @@ test.describe('Authentication flow', () => {
     await expect(page).toHaveURL('/login')
   })
 
-  test('login page shows Login and Sign Up tabs', async ({ page }) => {
+  test('login page shows sign in form and sign up link', async ({ page }) => {
     await page.goto('/login')
-    await expect(page.getByRole('tab', { name: 'Login' })).toBeVisible()
-    await expect(page.getByRole('tab', { name: 'Sign Up' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Runway Tracker' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Sign Up' })).toBeVisible()
   })
 
   test('shows error message on invalid email/password', async ({ page }) => {
@@ -17,7 +18,7 @@ test.describe('Authentication flow', () => {
     await page.fill('input[name="email"]', 'wrong@example.com')
     await page.fill('input[name="password"]', 'wrongpassword')
     await page.click('button[type="submit"]')
-    await expect(page.locator('p.text-red-500, p.text-sm.text-red-500')).toBeVisible()
+    await expect(page.locator('p.text-warning')).toBeVisible({ timeout: 10_000 })
   })
 })
 
