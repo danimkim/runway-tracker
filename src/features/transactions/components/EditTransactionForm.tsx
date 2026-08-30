@@ -87,7 +87,7 @@ export function EditTransactionForm({ transaction }: EditTransactionFormProps) {
       {state?.success === false ? <p className="text-sm text-red-500 text-center">{state.error}</p> : null}
 
       <button type="submit" disabled={isPending} className="btn-primary">
-        {isPending ? 'Saving...' : 'Save changes'}
+        {isPending ? 'Saving...' : 'Save'}
       </button>
       <Link href={`/transactions/${transaction.id}`} className="btn-secondary no-underline text-center">
         Cancel

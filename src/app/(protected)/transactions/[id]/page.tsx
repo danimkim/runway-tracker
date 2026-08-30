@@ -35,6 +35,15 @@ export default async function TransactionDetailPage({ params }: { params: Promis
           {cat ? CATEGORY_EMOJI[cat] : '❓'}
         </div>
         <p className="text-[28px] font-extrabold text-primary tracking-[-0.5px]">-£{tx.amount?.toFixed(2)}</p>
+        <div
+          className="inline-flex mt-2 py-1.5 px-3 rounded-[10px] text-[12px] font-semibold"
+          style={{
+            background: catColor ? catColor + '22' : 'var(--color-warning-bg)',
+            color: catColor ?? 'var(--color-warning)',
+          }}
+        >
+          {cat ? `${CATEGORY_EMOJI[cat]} ${cat}` : 'Uncategorized'}
+        </div>
         <p className="text-[15px] text-secondary font-medium mt-1">{tx.merchant_name}</p>
         <p className="text-[13px] text-faint mt-0.5">
           <TransactionDateTime value={tx.transacted_at} />
@@ -42,23 +51,10 @@ export default async function TransactionDetailPage({ params }: { params: Promis
       </div>
 
       <div className="flex flex-col pt-5 px-5 pb-[100px] gap-4">
-        <div className="bg-white rounded-item p-4 shadow-(--shadow-card)">
-          <p className="text-[13px] font-semibold text-secondary mb-3">Category</p>
-          <div
-            className="inline-flex py-2 px-[14px] rounded-[10px] text-[13px] font-semibold"
-            style={{
-              background: catColor ? catColor + '22' : 'var(--color-warning-bg)',
-              color: catColor ?? 'var(--color-warning)',
-            }}
-          >
-            {cat ? `${CATEGORY_EMOJI[cat]} ${cat}` : 'Uncategorized'}
-          </div>
-        </div>
-
         <ReceiptUpload transactionId={tx.id} userId={user.id} currentReceiptUrl={tx.receipt_url} />
 
         <Link href={`/transactions/${tx.id}/edit`} className="btn-primary no-underline text-center">
-          Edit transaction
+          Edit
         </Link>
 
         <DeleteTransactionButton transactionId={tx.id} />
