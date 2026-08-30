@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect, notFound } from 'next/navigation';
+import Link from 'next/link';
 import { SubPageHeader } from '@/components/layout/SubPageHeader';
 import { CATEGORY_NAMES, CATEGORY_COLORS, CATEGORY_EMOJI, CategoryName } from '@/lib/categories';
-import { updateTransactionCategory } from '@/features/transactions/actions/update-category';
 import { ReceiptUpload } from '@/features/transactions/components/ReceiptUpload';
 import { getTransactionById } from '@/features/transactions/data/transactions';
 import { DeleteTransactionButton } from '@/features/transactions/components/DeleteTransactionButton';
@@ -42,43 +42,24 @@ export default async function TransactionDetailPage({ params }: { params: Promis
       </div>
 
       <div className="flex flex-col pt-5 px-5 pb-[100px] gap-4">
-        <form action={updateTransactionCategory} className="flex flex-col gap-4">
-          <input type="hidden" name="id" value={tx.id} />
-
-          {/* Category */}
-          <div className="bg-white rounded-item p-4 shadow-(--shadow-card)">
-            <p className="text-[13px] font-semibold text-secondary mb-3">Category</p>
-            <div className="flex flex-wrap gap-2">
-              {CATEGORY_NAMES.map((c) => (
-                <label
-                  key={c}
-                  className="py-2 px-[14px] rounded-[10px] text-[13px] font-semibold cursor-pointer"
-                  style={{
-                    background: tx.category === c ? 'var(--color-accent)' : 'var(--color-surface)',
-                    color: tx.category === c ? 'white' : 'var(--color-secondary)',
-                  }}
-                >
-                  <input type="radio" name="category" value={c} defaultChecked={tx.category === c} className="hidden" />
-                  {CATEGORY_EMOJI[c]} {c}
-                </label>
-              ))}
-            </div>
+        <div className="bg-white rounded-item p-4 shadow-(--shadow-card)">
+          <p className="text-[13px] font-semibold text-secondary mb-3">Category</p>
+          <div
+            className="inline-flex py-2 px-[14px] rounded-[10px] text-[13px] font-semibold"
+            style={{
+              background: catColor ? catColor + '22' : 'var(--color-warning-bg)',
+              color: catColor ?? 'var(--color-warning)',
+            }}
+          >
+            {cat ? `${CATEGORY_EMOJI[cat]} ${cat}` : 'Uncategorized'}
           </div>
+        </div>
 
-          {/* Memo */}
-          {/* <div className="bg-white rounded-item p-4 shadow-(--shadow-card)">
-          <p className="text-[13px] font-semibold text-secondary mb-2.5">Memo</p>
-          <textarea
-            className="field-input resize-none h-20 leading-normal"
-            name="memo"
-            placeholder="Add a note..."
-            defaultValue={tx.receipt_url ?? ''}
-          />
-        </div> */}
-          <ReceiptUpload transactionId={tx.id} userId={user.id} currentReceiptUrl={tx.receipt_url} />
+        <ReceiptUpload transactionId={tx.id} userId={user.id} currentReceiptUrl={tx.receipt_url} />
 
-          <button className="btn-primary">Save</button>
-        </form>
+        <Link href={`/transactions/${tx.id}/edit`} className="btn-primary no-underline text-center">
+          Edit transaction
+        </Link>
 
         <DeleteTransactionButton transactionId={tx.id} />
       </div>
