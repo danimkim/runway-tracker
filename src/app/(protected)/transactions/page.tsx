@@ -91,10 +91,10 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                         </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-primary">{tx.displayAmount}</p>
+                    <div className="flex items-center justify-end gap-1.5 text-right">
+                      <p className="text-sm font-bold text-primary whitespace-nowrap">{tx.displayAmount}</p>
                       {tx.linkable && (
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-1 stroke-light">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 stroke-light">
                           <path d="M5 3l4 4-4 4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
