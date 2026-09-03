@@ -22,8 +22,8 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
     <div className="screen has-bottom-nav overflow-y-auto">
       {/* Header */}
       <div className="bg-white border-b border-border pt-14 px-5">
-        <h1 className="text-[22px] font-bold text-primary mb-[14px]">Transactions</h1>
-        <div className="flex bg-surface rounded-btn p-[3px] mb-4">
+        <h1 className="text-[22px] font-bold text-primary mb-3.5">Transactions</h1>
+        <div className="flex bg-surface rounded-btn p-0.75 mb-4">
           {(['GBP', 'KRW'] as const).map((t) => (
             <Link
               key={t}
@@ -41,9 +41,9 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
       </div>
 
       {/* Content */}
-      <div className="flex flex-col pt-4 px-5 pb-[120px] gap-4">
+      <div className="flex flex-col pt-4 px-5 pb-30 gap-4">
         {/* Total card */}
-        <div className="bg-white flex justify-between items-center rounded-item py-[14px] px-4 shadow-(--shadow-card)">
+        <div className="bg-white flex justify-between items-center rounded-item py-3.5 px-4 shadow-(--shadow-card)">
           <div>
             <p className="text-xs text-muted font-medium">This month</p>
             <p className="text-[20px] font-bold text-primary mt-0.5">
@@ -52,7 +52,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
           </div>
           <Link
             href="/upload"
-            className="bg-accent text-white font-semibold text-[13px] no-underline rounded-[10px] py-2 px-[14px]"
+            className="bg-accent text-white font-semibold text-[13px] no-underline rounded-[10px] py-2 px-3.5"
           >
             Upload PDF
           </Link>
@@ -71,17 +71,17 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
 
                 const inner = (
                   <>
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
                       <div
-                        className="flex items-center justify-center text-base shrink-0 w-[38px] h-[38px] rounded-btn"
+                        className="flex items-center justify-center text-base shrink-0 w-9.5 h-9.5 rounded-btn"
                         style={{ background: catColor ? catColor + '22' : 'var(--color-warning-bg)' }}
                       >
                         {cat ? CATEGORY_EMOJI[cat] : '❓'}
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold text-primary">{tx.merchant}</p>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-primary">{tx.merchant}</p>
                         <span
-                          className="text-[11px] font-semibold rounded-badge py-[2px] px-[7px]"
+                          className="text-[11px] font-semibold rounded-badge py-0.5 px-1.75"
                           style={{
                             color: catColor ?? 'var(--color-warning)',
                             background: catColor ? catColor + '22' : 'var(--color-warning-bg)',
@@ -91,10 +91,10 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                         </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-primary">{tx.displayAmount}</p>
+                    <div className="shrink-0 flex items-center justify-end gap-1.5 text-right">
+                      <p className="text-sm font-bold text-primary whitespace-nowrap">{tx.displayAmount}</p>
                       {tx.linkable && (
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-1 stroke-light">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 stroke-light">
                           <path d="M5 3l4 4-4 4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
