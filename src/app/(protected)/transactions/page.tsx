@@ -25,13 +25,13 @@ export default async function TransactionsPage({
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const txs = tab === 'GBP' ? await getGBPTransactions(user.id) : await getKRWTransactions(user.id);
-
   const month = new Date();
   month.setUTCDate(1);
   if (period.value === 'last-month') month.setUTCMonth(month.getUTCMonth() - 1);
-  const monthPrefix = month.toISOString().slice(0, 7);
-  const filteredTxs = period.value === 'all' ? txs : txs.filter((tx) => tx.transacted_at?.startsWith(monthPrefix));
+  const start = month.toISOString().slice(0, 10);
+  month.setUTCMonth(month.getUTCMonth() + 1);
+  const range = period.value === 'all' ? undefined : { start, end: month.toISOString().slice(0, 10) };
+  const filteredTxs = tab === 'GBP' ? await getGBPTransactions(user.id, range) : await getKRWTransactions(user.id, range);
   const total = filteredTxs.reduce((sum, tx) => sum + (tx.amount ?? 0), 0);
   const grouped = groupByDate(filteredTxs);
 
