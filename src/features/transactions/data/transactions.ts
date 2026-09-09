@@ -32,15 +32,41 @@ export async function getTransactionById(id: string, userId: string): Promise<Tx
   return data ?? null;
 }
 
-export async function getGBPTransactions(userId: string): Promise<TxItem[]> {
+export interface TransactionDateRange {
+  start: string;
+  end: string;
+}
+
+// Continue until empty, including when the server caps batches below 1,000 rows.
+async function fetchAllRows<T>(
+  fetchPage: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
+): Promise<T[]> {
+  const rows: T[] = [];
+  while (true) {
+    const { data, error } = await fetchPage(rows.length, rows.length + 999);
+    if (error) throw new Error('Failed to load transactions.', { cause: error });
+    if (!data) throw new Error('Missing transaction data.');
+    if (data.length === 0) return rows;
+    rows.push(...data);
+  }
+}
+
+export async function getGBPTransactions(userId: string, range?: TransactionDateRange): Promise<TxItem[]> {
   const supabase = await createClient();
 
-  const { data } = await supabase
-    .from('transactions')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('status', 'Approved')
-    .order('transacted_at', { ascending: false });
+  const data = await fetchAllRows((from, to) => {
+    let query = supabase
+      .from('transactions')
+      .select('id, merchant_name, amount, transacted_at, category')
+      .eq('user_id', userId)
+      .eq('status', 'Approved')
+      .order('transacted_at', { ascending: false })
+      .order('id', { ascending: false });
+    if (range) {
+      query = query.gte('transacted_at', `${range.start}T00:00:00Z`).lt('transacted_at', `${range.end}T00:00:00Z`);
+    }
+    return query.range(from, to);
+  });
 
   return (data ?? []).map((t) => ({
     id: t.id,
@@ -53,14 +79,19 @@ export async function getGBPTransactions(userId: string): Promise<TxItem[]> {
   }));
 }
 
-export async function getKRWTransactions(userId: string): Promise<TxItem[]> {
+export async function getKRWTransactions(userId: string, range?: TransactionDateRange): Promise<TxItem[]> {
   const supabase = await createClient();
 
-  const { data } = await supabase
-    .from('exchange_records')
-    .select('*')
-    .eq('user_id', userId)
-    .order('exchanged_at', { ascending: false });
+  const data = await fetchAllRows((from, to) => {
+    let query = supabase
+      .from('exchange_records')
+      .select('id, krw_out, exchanged_at')
+      .eq('user_id', userId)
+      .order('exchanged_at', { ascending: false })
+      .order('id', { ascending: false });
+    if (range) query = query.gte('exchanged_at', range.start).lt('exchanged_at', range.end);
+    return query.range(from, to);
+  });
 
   return (data ?? []).map((r) => ({
     id: r.id,
