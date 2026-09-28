@@ -4,6 +4,7 @@ import { useActionState } from 'react';
 import { CATEGORY_EMOJI, CATEGORY_NAMES } from '@/lib/categories';
 import { createTransaction } from '@/features/transactions/actions/create-transaction';
 import { RECEIPT_ACCEPT } from '@/features/transactions/utils/receipt-upload';
+import { MerchantAutocomplete } from '@/features/transactions/components/MerchantAutocomplete';
 
 interface CreateTransactionFormProps {
   defaultDate: string;
@@ -21,16 +22,7 @@ export function CreateTransactionForm({ defaultDate }: CreateTransactionFormProp
   return (
     <form action={formAction} className="flex flex-col gap-4 p-5 pb-24">
       <div className="bg-card rounded-item p-4 shadow-card">
-        <label className="field-label" htmlFor="merchantName">
-          Merchant
-        </label>
-        <input
-          id="merchantName"
-          name="merchantName"
-          className="field-input"
-          placeholder="Pret A Manger"
-          required
-        />
+        <MerchantAutocomplete placeholder="Pret A Manger" />
       </div>
 
       <div className="bg-card rounded-item p-4 shadow-card">

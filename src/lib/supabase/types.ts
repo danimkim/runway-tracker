@@ -282,7 +282,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      search_merchant_names: {
+        Args: { search_text?: string; max_results?: number };
+        Returns: { merchant_name: string }[];
+      };
     };
     Enums: {
       [_ in never]: never;
