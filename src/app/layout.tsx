@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
-// CSS is loaded by Next.js at runtime; the project does not declare CSS module types.
-// @ts-expect-error -- global CSS import handled by Next.js
 import './globals.css';
 
 const plusJakartaSans = localFont({

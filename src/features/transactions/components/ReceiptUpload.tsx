@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -82,12 +83,16 @@ export function ReceiptUpload({ transactionId, userId, currentReceiptUrl }: Rece
 
       {signedUrl && (
         <div className="relative mb-3">
-          <img
-            src={signedUrl}
-            alt="Receipt"
-            className="w-full max-h-64 object-cover rounded-lg cursor-pointer"
-            onClick={() => setLightboxOpen(true)}
-          />
+          <div className="relative h-64 w-full">
+            <Image
+              src={signedUrl}
+              alt="Receipt"
+              fill
+              unoptimized
+              className="object-contain rounded-lg cursor-pointer"
+              onClick={() => setLightboxOpen(true)}
+            />
+          </div>
           <button
             type="button"
             onClick={() => setDeleteConfirmOpen(true)}
@@ -117,16 +122,19 @@ export function ReceiptUpload({ transactionId, userId, currentReceiptUrl }: Rece
           <button
             type="button"
             onClick={() => setLightboxOpen(false)}
-            className="absolute top-4 right-4 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white text-sm font-bold"
+            className="absolute z-10 top-4 right-4 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white text-sm font-bold"
           >
             ✕
           </button>
-          <img
-            src={signedUrl}
-            alt="Receipt"
-            className="max-w-full max-h-full rounded-lg"
-            onClick={(e) => e.stopPropagation()}
-          />
+          <div className="relative w-full h-full max-w-5xl" onClick={(e) => e.stopPropagation()}>
+            <Image
+              src={signedUrl}
+              alt="Receipt"
+              fill
+              unoptimized
+              className="object-contain rounded-lg"
+            />
+          </div>
         </div>
       )}
 
