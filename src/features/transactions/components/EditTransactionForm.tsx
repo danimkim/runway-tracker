@@ -1,28 +1,31 @@
 'use client';
 
+import Link from 'next/link';
 import { useActionState } from 'react';
 import { CATEGORY_EMOJI, CATEGORY_NAMES } from '@/lib/categories';
-import { createTransaction } from '@/features/transactions/actions/create-transaction';
-import { RECEIPT_ACCEPT } from '@/features/transactions/utils/receipt-upload';
+import { updateTransaction } from '@/features/transactions/actions/update-transaction';
+import type { TxDetail } from '@/features/transactions/data/transactions';
 import { MerchantAutocomplete } from '@/features/transactions/components/MerchantAutocomplete';
 
-interface CreateTransactionFormProps {
-  defaultDate: string;
+interface EditTransactionFormProps {
+  transaction: TxDetail;
 }
 
-function toDateTimeLocalValue(date: string) {
+function toDateTimeLocalValue(date: string | null) {
+  if (!date) return '';
   if (date.includes('T')) return date.slice(0, 16);
   return `${date}T12:00`;
 }
 
-export function CreateTransactionForm({ defaultDate }: CreateTransactionFormProps) {
-  const [state, formAction, isPending] = useActionState(createTransaction, null);
-  const defaultDateTime = toDateTimeLocalValue(defaultDate);
+export function EditTransactionForm({ transaction }: EditTransactionFormProps) {
+  const [state, formAction, isPending] = useActionState(updateTransaction, null);
 
   return (
     <form action={formAction} className="flex flex-col gap-4 p-5 pb-24">
+      <input type="hidden" name="id" value={transaction.id} />
+
       <div className="bg-card rounded-item p-4 shadow-card">
-        <MerchantAutocomplete placeholder="Pret A Manger" />
+        <MerchantAutocomplete defaultValue={transaction.merchant_name ?? ''} />
       </div>
 
       <div className="bg-card rounded-item p-4 shadow-card">
@@ -39,7 +42,7 @@ export function CreateTransactionForm({ defaultDate }: CreateTransactionFormProp
             inputMode="decimal"
             min="0.01"
             step="0.01"
-            placeholder="12.50"
+            defaultValue={transaction.amount ?? ''}
             required
           />
         </div>
@@ -54,7 +57,7 @@ export function CreateTransactionForm({ defaultDate }: CreateTransactionFormProp
           name="transactedAt"
           className="field-input"
           type="datetime-local"
-          defaultValue={defaultDateTime}
+          defaultValue={toDateTimeLocalValue(transaction.transacted_at)}
           required
         />
       </div>
@@ -63,7 +66,7 @@ export function CreateTransactionForm({ defaultDate }: CreateTransactionFormProp
         <label className="field-label" htmlFor="category">
           Category
         </label>
-        <select id="category" name="category" className="field-input" defaultValue="">
+        <select id="category" name="category" className="field-input" defaultValue={transaction.category ?? ''}>
           <option value="">Uncategorized</option>
           {CATEGORY_NAMES.map((category) => (
             <option key={category} value={category}>
@@ -73,25 +76,14 @@ export function CreateTransactionForm({ defaultDate }: CreateTransactionFormProp
         </select>
       </div>
 
-      <div className="bg-card rounded-item p-4 shadow-card">
-        <label className="field-label" htmlFor="receipt">
-          Receipt image
-        </label>
-        <input
-          id="receipt"
-          name="receipt"
-          className="field-input file:mr-3 file:rounded-lg file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-[13px] file:font-semibold file:text-secondary"
-          type="file"
-          accept={RECEIPT_ACCEPT}
-        />
-        <p className="mt-2 text-[12px] text-muted">JPEG, PNG, WebP, or HEIC up to 10MB.</p>
-      </div>
-
-      {state?.success === false && <p className="text-sm text-red-500 text-center">{state.error}</p>}
+      {state?.success === false ? <p className="text-sm text-red-500 text-center">{state.error}</p> : null}
 
       <button type="submit" disabled={isPending} className="btn-primary">
-        {isPending ? 'Creating...' : 'Create transaction'}
+        {isPending ? 'Saving...' : 'Save'}
       </button>
+      <Link href={`/transactions/${transaction.id}`} className="btn-secondary no-underline text-center">
+        Cancel
+      </Link>
     </form>
   );
 }

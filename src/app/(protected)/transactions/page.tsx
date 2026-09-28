@@ -5,29 +5,46 @@ import { CATEGORY_COLORS, CATEGORY_EMOJI, CategoryName, isCategoryName } from '@
 import { getGBPTransactions, getKRWTransactions } from '@/features/transactions/data/transactions';
 import { groupByDate } from '@/features/transactions/utils/grouping';
 
-export default async function TransactionsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
-  const { tab = 'GBP' } = await searchParams;
+const periods = [
+  { value: 'this-month', label: 'This month' },
+  { value: 'last-month', label: 'Last month' },
+  { value: 'all', label: 'All time' },
+] as const;
+
+export default async function TransactionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string; period?: string }>;
+}) {
+  const params = await searchParams;
+  const tab = params.tab === 'KRW' ? 'KRW' : 'GBP';
+  const period = periods.find((option) => option.value === params.period) ?? periods[0];
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const txs = tab === 'GBP' ? await getGBPTransactions(user.id) : await getKRWTransactions(user.id);
-
-  const total = txs.reduce((s, t) => s + (t.amount ?? 0), 0);
-  const grouped = groupByDate(txs);
+  const month = new Date();
+  month.setUTCDate(1);
+  if (period.value === 'last-month') month.setUTCMonth(month.getUTCMonth() - 1);
+  const start = month.toISOString().slice(0, 10);
+  month.setUTCMonth(month.getUTCMonth() + 1);
+  const range = period.value === 'all' ? undefined : { start, end: month.toISOString().slice(0, 10) };
+  const filteredTxs = tab === 'GBP' ? await getGBPTransactions(user.id, range) : await getKRWTransactions(user.id, range);
+  const total = filteredTxs.reduce((sum, tx) => sum + (tx.amount ?? 0), 0);
+  const grouped = groupByDate(filteredTxs);
 
   return (
     <div className="screen has-bottom-nav overflow-y-auto">
       {/* Header */}
       <div className="bg-white border-b border-border pt-14 px-5">
-        <h1 className="text-[22px] font-bold text-primary mb-[14px]">Transactions</h1>
-        <div className="flex bg-surface rounded-btn p-[3px] mb-4">
+        <h1 className="text-[22px] font-bold text-primary mb-3.5">Transactions</h1>
+        <div className="flex bg-surface rounded-btn p-0.75 mb-4">
           {(['GBP', 'KRW'] as const).map((t) => (
             <Link
               key={t}
-              href={`/transactions?tab=${t}`}
+              href={`/transactions?tab=${t}&period=${period.value}`}
               className={`flex-1 font-semibold text-sm text-center no-underline block py-2 rounded-[10px] ${
                 tab === t
                   ? 'bg-white text-(--color-primary) shadow-[0_1px_4px_rgba(59,66,78,0.1)]'
@@ -41,18 +58,33 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
       </div>
 
       {/* Content */}
-      <div className="flex flex-col pt-4 px-5 pb-[120px] gap-4">
+      <div className="flex flex-col pt-4 px-5 pb-30 gap-4">
+        <nav aria-label="Transaction period" className="flex gap-2">
+          {periods.map((option) => (
+            <Link
+              key={option.value}
+              href={`/transactions?tab=${tab}&period=${option.value}`}
+              aria-current={period.value === option.value ? 'page' : undefined}
+              className={`flex-1 rounded-btn px-2 py-3 text-center text-xs font-semibold no-underline ${
+                period.value === option.value ? 'bg-primary text-white' : 'bg-white text-muted'
+              }`}
+            >
+              {option.label}
+            </Link>
+          ))}
+        </nav>
         {/* Total card */}
-        <div className="bg-white flex justify-between items-center rounded-item py-[14px] px-4 shadow-(--shadow-card)">
+        <div className="bg-white flex justify-between items-center rounded-item py-3.5 px-4 shadow-(--shadow-card)">
           <div>
-            <p className="text-xs text-muted font-medium">This month</p>
+            <p className="text-xs text-muted font-medium">{period.label}</p>
             <p className="text-[20px] font-bold text-primary mt-0.5">
               {tab === 'GBP' ? `£${total.toFixed(2)}` : `₩${total.toLocaleString()}`}
             </p>
+            <p className="text-xs text-muted mt-0.5">{tab === 'GBP' ? 'Total spent' : 'Total exchanged'}</p>
           </div>
           <Link
             href="/upload"
-            className="bg-accent text-white font-semibold text-[13px] no-underline rounded-[10px] py-2 px-[14px]"
+            className="bg-accent text-white font-semibold text-[13px] no-underline rounded-[10px] py-2 px-3.5"
           >
             Upload PDF
           </Link>
@@ -62,7 +94,13 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         {grouped.map(([date, dayTxs]) => (
           <div key={date}>
             <p className="text-xs font-semibold text-muted mb-2">
-              {new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { month: 'long', day: 'numeric' })}
+              {date
+                ? new Date(date + 'T00:00:00').toLocaleDateString('en-GB', {
+                    year: period.value === 'all' ? 'numeric' : undefined,
+                    month: 'long',
+                    day: 'numeric',
+                  })
+                : 'Unknown date'}
             </p>
             <div className="bg-white overflow-hidden rounded-item shadow-(--shadow-card)">
               {dayTxs.map((tx, i) => {
@@ -71,17 +109,17 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
 
                 const inner = (
                   <>
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
                       <div
-                        className="flex items-center justify-center text-base shrink-0 w-[38px] h-[38px] rounded-btn"
+                        className="flex items-center justify-center text-base shrink-0 w-9.5 h-9.5 rounded-btn"
                         style={{ background: catColor ? catColor + '22' : 'var(--color-warning-bg)' }}
                       >
                         {cat ? CATEGORY_EMOJI[cat] : '❓'}
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold text-primary">{tx.merchant}</p>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-primary">{tx.merchant}</p>
                         <span
-                          className="text-[11px] font-semibold rounded-badge py-[2px] px-[7px]"
+                          className="text-[11px] font-semibold rounded-badge py-0.5 px-1.75"
                           style={{
                             color: catColor ?? 'var(--color-warning)',
                             background: catColor ? catColor + '22' : 'var(--color-warning-bg)',
@@ -91,10 +129,10 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                         </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-primary">{tx.displayAmount}</p>
+                    <div className="shrink-0 flex items-center justify-end gap-1.5 text-right">
+                      <p className="text-sm font-bold text-primary whitespace-nowrap">{tx.displayAmount}</p>
                       {tx.linkable && (
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-1 stroke-light">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 stroke-light">
                           <path d="M5 3l4 4-4 4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
@@ -120,10 +158,12 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
           </div>
         ))}
 
-        {txs.length === 0 && (
+        {filteredTxs.length === 0 && (
           <div className="text-center text-faint py-12">
             <p className="text-[32px] mb-2">📭</p>
-            <p className="text-sm">No transactions yet</p>
+            <p className="text-sm">
+              {period.value === 'all' ? 'No transactions yet' : 'No transactions for this period'}
+            </p>
           </div>
         )}
       </div>
