@@ -5,6 +5,7 @@ import { useActionState } from 'react';
 import { CATEGORY_EMOJI, CATEGORY_NAMES } from '@/lib/categories';
 import { updateTransaction } from '@/features/transactions/actions/update-transaction';
 import type { TxDetail } from '@/features/transactions/data/transactions';
+import { MerchantAutocomplete } from '@/features/transactions/components/MerchantAutocomplete';
 
 interface EditTransactionFormProps {
   transaction: TxDetail;
@@ -24,16 +25,7 @@ export function EditTransactionForm({ transaction }: EditTransactionFormProps) {
       <input type="hidden" name="id" value={transaction.id} />
 
       <div className="bg-card rounded-item p-4 shadow-card">
-        <label className="field-label" htmlFor="merchantName">
-          Merchant
-        </label>
-        <input
-          id="merchantName"
-          name="merchantName"
-          className="field-input"
-          defaultValue={transaction.merchant_name ?? ''}
-          required
-        />
+        <MerchantAutocomplete defaultValue={transaction.merchant_name ?? ''} />
       </div>
 
       <div className="bg-card rounded-item p-4 shadow-card">
